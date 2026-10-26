@@ -96,3 +96,15 @@ def test_story_8_3_allowance_check_is_read_only(client, db_session):
     """Checking allowance never provisions or mutates quota rows."""
     client.post("/api/v1/tokens/check-allowance", json={"user_id": "lucas", "requested_tokens": 10})
     assert db_session.query(UserQuotaDB).count() == 0
+
+
+def test_story_8_3_request_larger_than_any_limit_is_an_explained_denial(client, seed_sam_quota):
+    """Review decision 2026-10-26: no upper bound on requested_tokens; oversize is DAILY_QUOTA_EXCEEDED."""
+    response = client.post(
+        "/api/v1/tokens/check-allowance", json={"user_id": "sam", "requested_tokens": 1_500_000}
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["allowed"] is False
+    assert data["reason_code"] == "DAILY_QUOTA_EXCEEDED"
+    assert data["requested_tokens"] == 1_500_000

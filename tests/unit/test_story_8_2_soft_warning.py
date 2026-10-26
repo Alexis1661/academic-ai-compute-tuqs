@@ -1,3 +1,5 @@
+import pytest
+
 from src.adapters.outbound.db import UserQuotaDB
 
 
@@ -40,6 +42,7 @@ def test_story_8_2_crossing_80_percent_during_ingestion(client, seed_quota):
 
     response = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": 2000,
         "completion_tokens": 1000
     })
@@ -107,3 +110,11 @@ def test_story_8_2_seeded_fixture_quotas(client, seeded_quotas_from_fixture):
         assert data["tokens_used"] == row["tokens_used"]
         assert data["token_limit"] == row["token_limit"]
         assert data["remaining_balance"] == row["token_limit"] - row["tokens_used"]
+
+
+@pytest.mark.parametrize("user_id", ["u" * 65, "s%20am"])
+def test_story_8_2_balance_path_user_id_is_validated(client, user_id):
+    """Path ids follow the same 1-64 chars, no-whitespace rule as body ids."""
+    response = client.get(f"/api/v1/tokens/balance/{user_id}")
+    assert response.status_code == 422
+    assert response.json()["error_code"] == "ERR_VALIDATION"

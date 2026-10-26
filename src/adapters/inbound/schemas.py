@@ -3,9 +3,12 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-# Upper bound per event/request: keeps values inside a 32-bit INTEGER column and
-# rejects absurd payloads with 422 instead of a database overflow.
-MAX_TOKENS_PER_REQUEST = 1_000_000
+# Sanity bound per consumption event. Counters are BIGINT, so this is not an overflow
+# guard; it rejects absurd payloads from a misbehaving gateway with 422.
+MAX_TOKENS_PER_EVENT = 1_000_000
+
+# Identifiers: 1-64 characters, no whitespace (so " sam" and "sam" are not two users)
+ID_PATTERN = r"^\S+$"
 
 
 class QuotaWarningDTO(BaseModel):
@@ -17,10 +20,10 @@ class QuotaWarningDTO(BaseModel):
 
 
 class TokenEventRequest(BaseModel):
-    user_id: str = Field(..., min_length=1, max_length=64, examples=["sam"])
-    subject_id: str = Field("CS-480", min_length=1, max_length=64, examples=["CS-480"])
-    prompt_tokens: int = Field(..., ge=0, le=MAX_TOKENS_PER_REQUEST, examples=[500])
-    completion_tokens: int = Field(..., ge=0, le=MAX_TOKENS_PER_REQUEST, examples=[250])
+    user_id: str = Field(..., min_length=1, max_length=64, pattern=ID_PATTERN, examples=["sam"])
+    subject_id: str = Field(..., min_length=1, max_length=64, pattern=ID_PATTERN, examples=["CS-480"])
+    prompt_tokens: int = Field(..., ge=0, le=MAX_TOKENS_PER_EVENT, strict=True, examples=[500])
+    completion_tokens: int = Field(..., ge=0, le=MAX_TOKENS_PER_EVENT, strict=True, examples=[250])
 
 
 class TokenEventResponse(BaseModel):
@@ -38,8 +41,9 @@ class TokenEventResponse(BaseModel):
 
 
 class CheckAllowanceRequest(BaseModel):
-    user_id: str = Field(..., min_length=1, max_length=64, examples=["sam"])
-    requested_tokens: int = Field(..., gt=0, le=MAX_TOKENS_PER_REQUEST, examples=[500])
+    user_id: str = Field(..., min_length=1, max_length=64, pattern=ID_PATTERN, examples=["sam"])
+    # No upper bound: any request above the remaining quota is an explained denial (AD-6)
+    requested_tokens: int = Field(..., gt=0, strict=True, examples=[500])
 
 
 class CheckAllowanceResponse(BaseModel):
@@ -85,7 +89,7 @@ class RootResponse(BaseModel):
 
 
 class ErrorBody(BaseModel):
-    """Single error envelope for every non-2xx response (contract ErrorBody)."""
+    """Single error envelope for every non-2xx API response (contract ErrorBody)."""
     error_code: str = Field(..., examples=["ERR_INVALID_TOKEN_COUNT"])
     message: str
     correlation_id: str

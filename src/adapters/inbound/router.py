@@ -2,10 +2,11 @@
 Inbound HTTP adapter. Thin by design: translate DTOs <-> use-case commands/results and
 set quota headers. No persistence or business rules live here.
 """
-from fastapi import APIRouter, Depends, Response, status
+from fastapi import APIRouter, Depends, Path, Response, status
 from fastapi.responses import JSONResponse
 
 from src.adapters.inbound.schemas import (
+    ID_PATTERN,
     CheckAllowanceRequest,
     CheckAllowanceResponse,
     ErrorBody,
@@ -137,8 +138,8 @@ def check_token_allowance(
     responses={**ERRORS_422, **ERRORS_503},
 )
 def get_user_quota_balance(
-    user_id: str,
     response: Response,
+    user_id: str = Path(..., min_length=1, max_length=64, pattern=ID_PATTERN),
     use_case: GetQuotaBalance = Depends(get_quota_balance),
 ):
     """Story 8.2: returns QUOTA_WARNING_80_PERCENT and X-Quota-Warning while usage >= 80%."""

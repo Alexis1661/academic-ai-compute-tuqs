@@ -1,3 +1,5 @@
+import pytest
+
 from src.adapters.outbound.db import TokenLedgerDB, UserQuotaDB
 
 
@@ -50,6 +52,7 @@ def test_story_8_1_successive_token_events_accumulation(client, db_session, seed
     """Consecutive events accumulate and each one appends its own ledger row."""
     res1 = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": 500,
         "completion_tokens": 250
     })
@@ -58,6 +61,7 @@ def test_story_8_1_successive_token_events_accumulation(client, db_session, seed
 
     res2 = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": 1200,
         "completion_tokens": 800
     })
@@ -72,6 +76,7 @@ def test_story_8_1_first_event_provisions_daily_quota(client, db_session):
     """A user without a row today gets one with the default limit on the first event."""
     response = client.post("/api/v1/tokens/events", json={
         "user_id": "mateo",
+        "subject_id": "CS-480",
         "prompt_tokens": 100,
         "completion_tokens": 50
     })
@@ -87,6 +92,7 @@ def test_story_8_1_invalid_negative_tokens_rejected(client, db_session):
     """Negative token counts fail schema validation with the ErrorBody envelope."""
     response = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": -10,
         "completion_tokens": 50
     })
@@ -101,6 +107,7 @@ def test_story_8_1_zero_tokens_event_rejected(client, db_session, seed_sam_quota
     """0 prompt + 0 completion violates the domain rule (total > 0): 400, nothing recorded."""
     response = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": 0,
         "completion_tokens": 0
     })
@@ -116,8 +123,46 @@ def test_story_8_1_oversized_token_count_rejected(client):
     """Values above the per-event bound are rejected (422), never overflowing the DB (500)."""
     response = client.post("/api/v1/tokens/events", json={
         "user_id": "sam",
+        "subject_id": "CS-480",
         "prompt_tokens": 10**20,
         "completion_tokens": 1
     })
     assert response.status_code == 422
     assert response.json()["error_code"] == "ERR_VALIDATION"
+
+
+def test_story_8_1_missing_subject_is_rejected(client, db_session):
+    """Review decision 2026-10-26: subject_id is required; nothing is charged to a default subject."""
+    response = client.post("/api/v1/tokens/events", json={
+        "user_id": "sam",
+        "prompt_tokens": 100,
+        "completion_tokens": 50
+    })
+    assert response.status_code == 422
+    assert response.json()["details"]["errors"][0]["loc"] == ["body", "subject_id"]
+    assert db_session.query(TokenLedgerDB).count() == 0
+
+
+@pytest.mark.parametrize("field,value", [
+    ("prompt_tokens", "500"),
+    ("prompt_tokens", 500.0),
+    ("completion_tokens", True),
+])
+def test_story_8_1_token_counts_must_be_json_integers(client, field, value):
+    """AC4: token counts are integers; strings, floats and booleans are not coerced."""
+    payload = {"user_id": "sam", "subject_id": "CS-480", "prompt_tokens": 1, "completion_tokens": 1}
+    payload[field] = value
+    response = client.post("/api/v1/tokens/events", json=payload)
+    assert response.status_code == 422
+    assert response.json()["error_code"] == "ERR_VALIDATION"
+
+
+@pytest.mark.parametrize("user_id", [" sam", "sam ", "s am"])
+def test_story_8_1_user_id_with_whitespace_is_rejected(client, user_id):
+    response = client.post("/api/v1/tokens/events", json={
+        "user_id": user_id,
+        "subject_id": "CS-480",
+        "prompt_tokens": 1,
+        "completion_tokens": 1
+    })
+    assert response.status_code == 422
