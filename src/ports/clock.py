@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from datetime import datetime, timezone
+from datetime import datetime
+
+from src.domain.models import period_key
 
 
 class IClock(ABC):
@@ -10,5 +12,5 @@ class IClock(ABC):
         """Current timezone-aware UTC datetime."""
 
     def today_str(self) -> str:
-        """Current UTC date in ISO YYYY-MM-DD format."""
-        return self.now().astimezone(timezone.utc).date().isoformat()
+        """Current daily period key (UTC date, YYYY-MM-DD)."""
+        return period_key(self.now())

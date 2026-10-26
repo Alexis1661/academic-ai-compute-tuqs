@@ -3,11 +3,25 @@ from datetime import datetime, time, timedelta, timezone
 from typing import Optional
 
 
+# Daily periods are UTC days (00:00 UTC reset, Annex Story 8.3). For Impl-1 this
+# supersedes the America/Bogota period key of ARCHITECTURE.md AD-5 (review decision 2026-10-26).
+
+
+def _as_utc(now: datetime) -> datetime:
+    """Naive datetimes are treated as UTC, never as local time."""
+    if now.tzinfo is None:
+        return now.replace(tzinfo=timezone.utc)
+    return now.astimezone(timezone.utc)
+
+
+def period_key(now: datetime) -> str:
+    """Daily quota period key (YYYY-MM-DD, UTC) for the instant `now`."""
+    return _as_utc(now).date().isoformat()
+
+
 def next_daily_reset(now: datetime) -> datetime:
     """Returns the next 00:00 UTC boundary after `now` (daily quota period reset, AD-5)."""
-    if now.tzinfo is None:
-        now = now.replace(tzinfo=timezone.utc)
-    today_utc = now.astimezone(timezone.utc).date()
+    today_utc = _as_utc(now).date()
     return datetime.combine(today_utc + timedelta(days=1), time.min, tzinfo=timezone.utc)
 
 

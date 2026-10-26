@@ -12,6 +12,7 @@ from src.domain.models import (
     TokenLedgerEntry,
     UserQuota,
     next_daily_reset,
+    period_key,
 )
 from src.domain.services import QuotaDomainService
 from src.ports.clock import IClock
@@ -50,6 +51,8 @@ class AllowanceResult:
 
 
 class _QuotaUseCase:
+    """Each execute() reads the clock once; timestamp, period key and reset derive from it (AD-5)."""
+
     def __init__(
         self,
         repository: IQuotaRepository,
@@ -76,7 +79,7 @@ class IngestTokenEvent(_QuotaUseCase):
             occurred_at=now,
         )
         quota = self.repository.record_consumption(
-            entry, date=self.clock.today_str(), default_limit=self.default_limit
+            entry, date=period_key(now), default_limit=self.default_limit
         )
         warning = self.domain.evaluate_soft_warning(quota)
 
@@ -105,7 +108,7 @@ class GetQuotaBalance(_QuotaUseCase):
     def execute(self, user_id: str) -> BalanceResult:
         now = self.clock.now()
         quota = self.repository.get_quota_or_default(
-            user_id, self.clock.today_str(), self.default_limit
+            user_id, period_key(now), self.default_limit
         )
         return BalanceResult(quota, self.domain.evaluate_soft_warning(quota), next_daily_reset(now))
 
@@ -116,7 +119,7 @@ class CheckAllowance(_QuotaUseCase):
     def execute(self, user_id: str, requested_tokens: int) -> AllowanceResult:
         now = self.clock.now()
         quota = self.repository.get_quota_or_default(
-            user_id, self.clock.today_str(), self.default_limit
+            user_id, period_key(now), self.default_limit
         )
         decision = self.domain.evaluate_allowance(quota, requested_tokens, now)
         if not decision.allowed:

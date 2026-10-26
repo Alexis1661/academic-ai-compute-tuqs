@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import pytest
 
 from src.domain.exceptions import InvalidTokenCountError
-from src.domain.models import UserQuota, next_daily_reset
+from src.domain.models import UserQuota, next_daily_reset, period_key
 from src.domain.services import QuotaDomainService
 
 NOW = datetime(2026, 10, 25, 23, 59, 59, tzinfo=timezone.utc)
@@ -73,3 +73,15 @@ def test_next_daily_reset_is_next_utc_midnight():
     assert next_daily_reset(datetime(2026, 10, 26, tzinfo=timezone.utc)) == datetime(
         2026, 10, 27, tzinfo=timezone.utc
     )
+
+
+def test_period_key_and_reset_come_from_the_same_instant():
+    just_before = datetime(2026, 10, 25, 23, 59, 59, 999999, tzinfo=timezone.utc)
+    assert period_key(just_before) == "2026-10-25"
+    assert next_daily_reset(just_before) == datetime(2026, 10, 26, tzinfo=timezone.utc)
+
+
+def test_naive_datetimes_are_treated_as_utc():
+    naive = datetime(2026, 10, 25, 23, 30)
+    assert period_key(naive) == "2026-10-25"
+    assert next_daily_reset(naive) == datetime(2026, 10, 26, tzinfo=timezone.utc)

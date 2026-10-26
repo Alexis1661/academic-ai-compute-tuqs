@@ -5,6 +5,7 @@ from src.domain.models import (
     TokenLedgerEntry,
     UserQuota,
     next_daily_reset,
+    period_key,
 )
 from src.domain.services import QuotaDomainService
 
@@ -14,6 +15,7 @@ __all__ = [
     "QuotaWarningInfo",
     "AllowanceDecision",
     "next_daily_reset",
+    "period_key",
     "DomainError",
     "InvalidTokenCountError",
     "StorageUnavailableError",
