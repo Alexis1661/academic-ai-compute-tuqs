@@ -1,6 +1,3 @@
-from datetime import timezone
-from typing import List
-
 from sqlalchemy import select, text, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
@@ -32,9 +29,13 @@ class SQLQuotaRepository(IQuotaRepository):
         self.session = session
 
     def get_quota_or_default(self, user_id: str, date: str, default_limit: int) -> UserQuota:
-        record = self.session.execute(
-            select(UserQuotaDB).where(UserQuotaDB.user_id == user_id, UserQuotaDB.date == date)
-        ).scalar_one_or_none()
+        try:
+            record = self.session.execute(
+                select(UserQuotaDB).where(UserQuotaDB.user_id == user_id, UserQuotaDB.date == date)
+            ).scalar_one_or_none()
+        except OperationalError as exc:
+            # AD-7: never answer a quota read from anything but the store
+            raise StorageUnavailableError() from exc
         if record is None:
             return UserQuota(user_id=user_id, date=date, token_limit=default_limit, tokens_used=0)
         return UserQuota(
@@ -86,27 +87,6 @@ class SQLQuotaRepository(IQuotaRepository):
         return UserQuota(
             user_id=entry.user_id, date=date, token_limit=token_limit, tokens_used=tokens_used
         )
-
-    def get_ledger_entries(self, user_id: str, limit: int = 50) -> List[TokenLedgerEntry]:
-        records = self.session.execute(
-            select(TokenLedgerDB)
-            .where(TokenLedgerDB.user_id == user_id)
-            .order_by(TokenLedgerDB.timestamp.desc())
-            .limit(limit)
-        ).scalars()
-        return [
-            TokenLedgerEntry(
-                id=r.id,
-                user_id=r.user_id,
-                subject_id=r.subject_id,
-                prompt_tokens=r.prompt_tokens,
-                completion_tokens=r.completion_tokens,
-                total_tokens=r.total_tokens,
-                # SQLite drops tzinfo on read; stored values are always UTC
-                timestamp=r.timestamp if r.timestamp.tzinfo else r.timestamp.replace(tzinfo=timezone.utc),
-            )
-            for r in records
-        ]
 
     def ping(self) -> bool:
         try:

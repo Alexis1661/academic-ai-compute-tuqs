@@ -42,9 +42,3 @@ class JsonFleetAdapter(IFleetProvider):
 
     def get_all_nodes(self) -> List[Dict[str, Any]]:
         return self._data.get("nodes", [])
-
-    def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
-        for node in self._data.get("nodes", []):
-            if node.get("node_id") == node_id:
-                return node
-        return None

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 
 
 class IFleetProvider(ABC):
@@ -11,8 +11,4 @@ class IFleetProvider(ABC):
 
     @abstractmethod
     def get_all_nodes(self) -> List[Dict[str, Any]]:
-        pass
-
-    @abstractmethod
-    def get_node(self, node_id: str) -> Optional[Dict[str, Any]]:
         pass
