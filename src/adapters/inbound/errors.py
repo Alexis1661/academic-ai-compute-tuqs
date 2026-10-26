@@ -1,9 +1,11 @@
 """
-Uniform error envelope (ErrorBody) for every non-2xx response: domain errors,
+Uniform error envelope (ErrorBody) for every non-2xx API error: domain errors,
 request validation, unknown routes and unexpected failures. No stack traces leak.
 """
 import logging
+import re
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from fastapi import FastAPI, Request, status
@@ -19,6 +21,8 @@ from src.domain.exceptions import DomainError, InvalidTokenCountError, StorageUn
 logger = logging.getLogger(__name__)
 
 CORRELATION_HEADER = "X-Correlation-ID"
+# Client-supplied ids are echoed and logged, so only safe tokens are accepted
+_CORRELATION_ID_RE = re.compile(r"[A-Za-z0-9._-]{1,128}")
 
 _DOMAIN_STATUS = {
     InvalidTokenCountError: status.HTTP_400_BAD_REQUEST,
@@ -32,13 +36,18 @@ _HTTP_CODES = {
 
 
 def _correlation_id(request: Request) -> str:
-    return request.headers.get(CORRELATION_HEADER) or str(uuid.uuid4())
+    supplied = request.headers.get(CORRELATION_HEADER, "")
+    return supplied if _CORRELATION_ID_RE.fullmatch(supplied) else str(uuid.uuid4())
 
 
 def _now(request: Request):
     # Same time source as the use cases (AD-5), honouring test overrides.
     provider = request.app.dependency_overrides.get(get_clock, get_clock)
-    return provider().now()
+    try:
+        return provider().now()
+    except Exception:
+        # An error handler must never fail; fall back to the system UTC time
+        return datetime.now(timezone.utc)
 
 
 def error_response(
@@ -65,7 +74,10 @@ def error_response(
 
 
 async def _domain_error(request: Request, exc: DomainError) -> JSONResponse:
-    status_code = _DOMAIN_STATUS.get(type(exc), status.HTTP_400_BAD_REQUEST)
+    status_code = next(
+        (code for kind, code in _DOMAIN_STATUS.items() if isinstance(exc, kind)),
+        status.HTTP_400_BAD_REQUEST,
+    )
     headers = {"Retry-After": "5"} if isinstance(exc, StorageUnavailableError) else None
     return error_response(request, status_code, exc.code, exc.message, headers=headers)
 
