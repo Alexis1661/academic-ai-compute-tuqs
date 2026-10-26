@@ -1,0 +1,27 @@
+services:
+  tuqs-service:
+    build: .
+    container_name: academic_tuqs_service
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=Academic-AI-Compute-TUQS
+      - APP_ENV=production
+      - API_V1_PREFIX=/api/v1
+      - PORT=8000
+      - HOST=0.0.0.0
+      - LOG_LEVEL=INFO
+      # Absolute path inside the mounted volume so data survives container recreation
+      - DATABASE_URL=sqlite:////app/data/tuqs.db
+      - AUTO_MIGRATE=true
+      - DEFAULT_DAILY_TOKEN_LIMIT=100000
+      - SOFT_WARNING_THRESHOLD=0.80
+      - FLEET_FIXTURE_PATH=tests/fixtures/fleet_nodes.json
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
