@@ -1,0 +1,30 @@
+[
+  {
+    "user_id": "sam",
+    "name": "Sam Student",
+    "email": "sam@univ.edu",
+    "role": "student",
+    "default_quota": 100000
+  },
+  {
+    "user_id": "maya",
+    "name": "Maya Researcher",
+    "email": "maya@univ.edu",
+    "role": "researcher",
+    "default_quota": 250000
+  },
+  {
+    "user_id": "mateo",
+    "name": "Mateo Lab Assistant",
+    "email": "mateo@univ.edu",
+    "role": "student",
+    "default_quota": 100000
+  },
+  {
+    "user_id": "gabriel",
+    "name": "Gabriel Dean",
+    "email": "gabriel@univ.edu",
+    "role": "administrator",
+    "default_quota": 1000000
+  }
+]
