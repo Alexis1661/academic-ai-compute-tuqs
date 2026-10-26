@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    version="1.1.0",
+    version="1.2.0",
     description="Token Usage & Quota Service (TUQS) - Module 8 of Academic AI Compute Fabric",
     lifespan=lifespan,
     docs_url="/docs",

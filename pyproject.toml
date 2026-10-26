@@ -1,6 +1,6 @@
 [project]
 name = "academic-ai-compute-tuqs"
-version = "1.1.0"
+version = "1.2.0"
 description = "Token Usage & Quota Service (TUQS) - Module 8 for Academic AI Compute Fabric"
 readme = "README.md"
 requires-python = ">=3.11"
