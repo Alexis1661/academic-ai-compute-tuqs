@@ -1,4 +1,5 @@
 from sqlalchemy import (
+    BigInteger,
     CheckConstraint,
     Column,
     DateTime,
@@ -16,14 +17,14 @@ Base = declarative_base()
 
 
 class UserQuotaDB(Base):
-    """Daily user quota row. Mirrors migrations/versions/0001_initial_schema.py."""
+    """Daily user quota row. Mirrors migrations 0001 + 0002 (BIGINT counters)."""
     __tablename__ = "user_quotas"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(64), nullable=False)
     date = Column(String(10), nullable=False)
-    tokens_used = Column(Integer, nullable=False, default=0)
-    token_limit = Column(Integer, nullable=False)
+    tokens_used = Column(BigInteger, nullable=False, default=0)
+    token_limit = Column(BigInteger, nullable=False)
 
     __table_args__ = (
         UniqueConstraint("user_id", "date", name="uq_user_date"),
@@ -39,9 +40,9 @@ class TokenLedgerDB(Base):
     id = Column(String(36), primary_key=True)
     user_id = Column(String(64), nullable=False)
     subject_id = Column(String(64), nullable=False)
-    prompt_tokens = Column(Integer, nullable=False)
-    completion_tokens = Column(Integer, nullable=False)
-    total_tokens = Column(Integer, nullable=False)
+    prompt_tokens = Column(BigInteger, nullable=False)
+    completion_tokens = Column(BigInteger, nullable=False)
+    total_tokens = Column(BigInteger, nullable=False)
     timestamp = Column(DateTime(timezone=True), nullable=False)
 
     __table_args__ = (
