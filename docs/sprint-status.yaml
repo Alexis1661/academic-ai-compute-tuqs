@@ -52,6 +52,8 @@ stories:
       - { date: "2026-10-25", status: "ready-for-review" }
       - { date: "2026-10-25", status: "in-progress", note: "review rework D-07: lost update under concurrency" }
       - { date: "2026-10-25", status: "done" }
+      - { date: "2026-10-26", status: "review", note: "bmad-create-story + bmad-code-review; decisions and patches applied" }
+      - { date: "2026-10-26", status: "done" }
     endpoints:
       - "POST /api/v1/tokens/events"
     tables_affected:
@@ -62,11 +64,11 @@ stories:
       invariants_upheld:
         - "AD-1: counter increment and ledger append in one transaction (in-database increment)"
         - "AD-4: append-only ledger; counter equals sum of ledger deltas (concurrency test)"
-        - "AD-5: event timestamp and period key from the injected IClock"
+        - "AD-5: one IClock read per request; UTC period key (Annex) supersedes AD-5 America/Bogota for Impl-1"
       test_files:
         - "tests/unit/test_story_8_1_ledger_ingestion.py"
         - "tests/integration/test_atomic_consumption.py"
-      tests_passing: 8
+      tests_passing: 15
       zero_skipped_tests: true
       documentation_updated: true
 
@@ -81,6 +83,8 @@ stories:
       - { date: "2026-10-25", status: "ready-for-review" }
       - { date: "2026-10-25", status: "in-progress", note: "review rework D-04/D-08: header value per PRD FR-11" }
       - { date: "2026-10-25", status: "done" }
+      - { date: "2026-10-26", status: "review", note: "bmad-create-story + bmad-code-review; decisions and patches applied" }
+      - { date: "2026-10-26", status: "done" }
     endpoints:
       - "POST /api/v1/tokens/events"
       - "GET /api/v1/tokens/balance/{user_id}"
@@ -98,7 +102,7 @@ stories:
         - "X-Quota-Reset"
       test_files:
         - "tests/unit/test_story_8_2_soft_warning.py"
-      tests_passing: 7
+      tests_passing: 9
       zero_skipped_tests: true
       documentation_updated: true
 
@@ -113,6 +117,8 @@ stories:
       - { date: "2026-10-25", status: "ready-for-review" }
       - { date: "2026-10-25", status: "in-progress", note: "review rework D-09: reason_code, ISO resets_at, ErrorBody" }
       - { date: "2026-10-25", status: "done" }
+      - { date: "2026-10-26", status: "review", note: "bmad-create-story + bmad-code-review; decisions and patches applied" }
+      - { date: "2026-10-26", status: "done" }
     endpoints:
       - "POST /api/v1/tokens/check-allowance"
     tables_affected:
@@ -125,21 +131,22 @@ stories:
         - "AD-5: resets_at is the next 00:00 UTC from the injected IClock"
       test_files:
         - "tests/unit/test_story_8_3_hard_denial.py"
-      tests_passing: 8
+      tests_passing: 9
       zero_skipped_tests: true
       documentation_updated: true
 
 deferred_to_impl2:
   - "Solu-2 reserveTokens / commitUsage / releaseExpiredReservations (docs/contracts/solu2/)"
   - "AD-2 idempotency keys on writes"
+  - "Items deferred by bmad-code-review 2026-10-26: BMad workspace _bmad-output/implementation-artifacts/deferred-work.md"
   - "Group and course buckets; 80% notification outbox with de-duplication"
 
 quality_summary:
-  # Measured: pytest -v and pytest --cov=src --cov-branch on 2026-10-25 (docs/test-evidence-impl1.txt)
-  total_tests: 53
-  passed_tests: 53
+  # Measured: pytest -v and pytest --cov=src --cov-branch on 2026-10-26 (docs/test-evidence-impl1.txt)
+  total_tests: 81
+  passed_tests: 81
   failed_tests: 0
   skipped_tests: 0
   pass_rate: "100%"
-  line_and_branch_coverage_src: "92%"
+  line_and_branch_coverage_src: "95%"
   lint: "ruff check . -> All checks passed"

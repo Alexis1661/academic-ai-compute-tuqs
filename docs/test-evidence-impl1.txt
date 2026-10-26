@@ -3,63 +3,119 @@ platform win32 -- Python 3.12.6, pytest-9.0.3, pluggy-1.6.0 -- C:\Python312\pyth
 rootdir: academic-ai-compute-tuqs
 configfile: pyproject.toml
 testpaths: tests
-collecting ... collected 53 items
+collecting ... collected 81 items
 
 tests/contract/test_openapi_contract.py::test_openapi_version PASSED     [  1%]
-tests/contract/test_openapi_contract.py::test_same_operations PASSED     [  3%]
-tests/contract/test_openapi_contract.py::test_same_status_codes_and_payload_schemas PASSED [  5%]
-tests/contract/test_openapi_contract.py::test_component_schemas_match PASSED [  7%]
-tests/contract/test_openapi_contract.py::test_no_unplanned_live_schemas PASSED [  9%]
-tests/integration/test_atomic_consumption.py::test_concurrent_events_do_not_lose_updates PASSED [ 11%]
-tests/integration/test_atomic_consumption.py::test_failed_ledger_insert_rolls_back_counter PASSED [ 13%]
-tests/integration/test_migrations.py::test_migration_matches_orm_metadata PASSED [ 15%]
-tests/integration/test_migrations.py::test_migration_is_idempotent PASSED [ 16%]
-tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[-1-5] PASSED [ 18%]
-tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[5--1] PASSED [ 20%]
-tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[0-0] PASSED [ 22%]
-tests/unit/test_domain_quota_service.py::test_build_ledger_entry_totals_and_timestamp PASSED [ 24%]
-tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[79999-False] PASSED [ 26%]
-tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[80000-True] PASSED [ 28%]
-tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[100000-True] PASSED [ 30%]
-tests/unit/test_domain_quota_service.py::test_crossing_detected_only_on_transition PASSED [ 32%]
-tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[99500-500-True] PASSED [ 33%]
-tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[99501-500-False] PASSED [ 35%]
-tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[100000-1-False] PASSED [ 37%]
-tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[0-100000-True] PASSED [ 39%]
-tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[0-100001-False] PASSED [ 41%]
-tests/unit/test_domain_quota_service.py::test_allowance_rejects_non_positive_request PASSED [ 43%]
-tests/unit/test_domain_quota_service.py::test_remaining_balance_never_negative PASSED [ 45%]
-tests/unit/test_domain_quota_service.py::test_next_daily_reset_is_next_utc_midnight PASSED [ 47%]
-tests/unit/test_error_handling.py::test_unknown_route_returns_error_body PASSED [ 49%]
-tests/unit/test_error_handling.py::test_correlation_id_is_echoed PASSED  [ 50%]
-tests/unit/test_error_handling.py::test_storage_unavailable_fails_closed_with_503 PASSED [ 52%]
-tests/unit/test_error_handling.py::test_unexpected_error_returns_structured_500 PASSED [ 54%]
-tests/unit/test_fleet_and_health.py::test_root_endpoint PASSED           [ 56%]
-tests/unit/test_fleet_and_health.py::test_health_check_probe PASSED      [ 58%]
-tests/unit/test_fleet_and_health.py::test_fleet_inventory_32_nodes_composition PASSED [ 60%]
+tests/contract/test_openapi_contract.py::test_same_operations PASSED     [  2%]
+tests/contract/test_openapi_contract.py::test_same_status_codes_and_payload_schemas PASSED [  3%]
+tests/contract/test_openapi_contract.py::test_component_schemas_match PASSED [  4%]
+tests/contract/test_openapi_contract.py::test_no_unplanned_live_schemas PASSED [  6%]
+tests/integration/test_atomic_consumption.py::test_concurrent_events_do_not_lose_updates PASSED [  7%]
+tests/integration/test_atomic_consumption.py::test_failed_ledger_insert_rolls_back_counter PASSED [  8%]
+tests/integration/test_migrations.py::test_migration_matches_orm_metadata PASSED [  9%]
+tests/integration/test_migrations.py::test_migration_is_idempotent PASSED [ 11%]
+tests/integration/test_migrations.py::test_counters_are_bigint_after_migration PASSED [ 12%]
+tests/integration/test_migrations.py::test_upgrade_from_0001_preserves_existing_rows PASSED [ 13%]
+tests/integration/test_migrations.py::test_percent_sign_in_database_url_does_not_break_migrations PASSED [ 14%]
+tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[-1-5] PASSED [ 16%]
+tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[5--1] PASSED [ 17%]
+tests/unit/test_domain_quota_service.py::test_invalid_token_counts_raise[0-0] PASSED [ 18%]
+tests/unit/test_domain_quota_service.py::test_build_ledger_entry_totals_and_timestamp PASSED [ 19%]
+tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[79999-False] PASSED [ 20%]
+tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[80000-True] PASSED [ 22%]
+tests/unit/test_domain_quota_service.py::test_soft_warning_threshold[100000-True] PASSED [ 23%]
+tests/unit/test_domain_quota_service.py::test_crossing_detected_only_on_transition PASSED [ 24%]
+tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[99500-500-True] PASSED [ 25%]
+tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[99501-500-False] PASSED [ 27%]
+tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[100000-1-False] PASSED [ 28%]
+tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[0-100000-True] PASSED [ 29%]
+tests/unit/test_domain_quota_service.py::test_allowance_zero_tolerance[0-100001-False] PASSED [ 30%]
+tests/unit/test_domain_quota_service.py::test_allowance_rejects_non_positive_request PASSED [ 32%]
+tests/unit/test_domain_quota_service.py::test_remaining_balance_never_negative PASSED [ 33%]
+tests/unit/test_domain_quota_service.py::test_next_daily_reset_is_next_utc_midnight PASSED [ 34%]
+tests/unit/test_domain_quota_service.py::test_period_key_and_reset_come_from_the_same_instant PASSED [ 35%]
+tests/unit/test_domain_quota_service.py::test_naive_datetimes_are_treated_as_utc PASSED [ 37%]
+tests/unit/test_error_handling.py::test_unknown_route_returns_error_body PASSED [ 38%]
+tests/unit/test_error_handling.py::test_correlation_id_is_echoed PASSED  [ 39%]
+tests/unit/test_error_handling.py::test_storage_unavailable_fails_closed_with_503 PASSED [ 40%]
+tests/unit/test_error_handling.py::test_unexpected_error_returns_structured_500 PASSED [ 41%]
+tests/unit/test_error_handling.py::test_read_paths_fail_closed_on_real_database_error[get-/api/v1/tokens/balance/sam-None] PASSED [ 43%]
+tests/unit/test_error_handling.py::test_read_paths_fail_closed_on_real_database_error[post-/api/v1/tokens/check-allowance-payload1] PASSED [ 44%]
+tests/unit/test_error_handling.py::test_unsafe_correlation_id_is_replaced[bad id with spaces] PASSED [ 45%]
+tests/unit/test_error_handling.py::test_unsafe_correlation_id_is_replaced[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx] PASSED [ 46%]
+tests/unit/test_error_handling.py::test_unsafe_correlation_id_is_replaced[evil;Injected=yes] PASSED [ 48%]
+tests/unit/test_error_handling.py::test_storage_error_subclass_still_maps_to_503 PASSED [ 49%]
+tests/unit/test_error_handling.py::test_error_handler_survives_a_failing_clock PASSED [ 50%]
+tests/unit/test_fleet_and_health.py::test_root_endpoint PASSED           [ 51%]
+tests/unit/test_fleet_and_health.py::test_health_check_probe PASSED      [ 53%]
+tests/unit/test_fleet_and_health.py::test_fleet_inventory_32_nodes_composition PASSED [ 54%]
+tests/unit/test_settings.py::test_invalid_settings_are_rejected[overrides0] PASSED [ 55%]
+tests/unit/test_settings.py::test_invalid_settings_are_rejected[overrides1] PASSED [ 56%]
+tests/unit/test_settings.py::test_invalid_settings_are_rejected[overrides2] PASSED [ 58%]
+tests/unit/test_settings.py::test_invalid_settings_are_rejected[overrides3] PASSED [ 59%]
+tests/unit/test_settings.py::test_invalid_settings_are_rejected[overrides4] PASSED [ 60%]
+tests/unit/test_settings.py::test_log_level_is_normalised PASSED         [ 61%]
 tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_bdd_scenario_ingest_token_event PASSED [ 62%]
 tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_successive_token_events_accumulation PASSED [ 64%]
-tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_first_event_provisions_daily_quota PASSED [ 66%]
-tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_invalid_negative_tokens_rejected PASSED [ 67%]
-tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_zero_tokens_event_rejected PASSED [ 69%]
-tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_oversized_token_count_rejected PASSED [ 71%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_bdd_scenario_soft_warning_at_82_percent PASSED [ 73%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_crossing_80_percent_during_ingestion PASSED [ 75%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_below_80_percent_no_warning PASSED [ 77%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_exact_80_percent_boundary_triggers_warning PASSED [ 79%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_warning_header_on_allowance_checks PASSED [ 81%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_balance_query_is_read_only PASSED [ 83%]
-tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_seeded_fixture_quotas PASSED [ 84%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_bdd_scenario_hard_denial_when_exhausted PASSED [ 86%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_allowed_when_within_budget PASSED [ 88%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_boundary_condition_exact_ceiling_allowed PASSED [ 90%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_boundary_condition_one_token_over_denied PASSED [ 92%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_invalid_zero_or_negative_request[0] PASSED [ 94%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_first_event_provisions_daily_quota PASSED [ 65%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_invalid_negative_tokens_rejected PASSED [ 66%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_zero_tokens_event_rejected PASSED [ 67%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_oversized_token_count_rejected PASSED [ 69%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_missing_subject_is_rejected PASSED [ 70%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_token_counts_must_be_json_integers[prompt_tokens-500] PASSED [ 71%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_token_counts_must_be_json_integers[prompt_tokens-500.0] PASSED [ 72%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_token_counts_must_be_json_integers[completion_tokens-True] PASSED [ 74%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_user_id_with_whitespace_is_rejected[ sam] PASSED [ 75%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_user_id_with_whitespace_is_rejected[sam ] PASSED [ 76%]
+tests/unit/test_story_8_1_ledger_ingestion.py::test_story_8_1_user_id_with_whitespace_is_rejected[s am] PASSED [ 77%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_bdd_scenario_soft_warning_at_82_percent PASSED [ 79%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_crossing_80_percent_during_ingestion PASSED [ 80%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_below_80_percent_no_warning PASSED [ 81%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_exact_80_percent_boundary_triggers_warning PASSED [ 82%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_warning_header_on_allowance_checks PASSED [ 83%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_balance_query_is_read_only PASSED [ 85%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_seeded_fixture_quotas PASSED [ 86%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_balance_path_user_id_is_validated[uuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuuu] PASSED [ 87%]
+tests/unit/test_story_8_2_soft_warning.py::test_story_8_2_balance_path_user_id_is_validated[s%20am] PASSED [ 88%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_bdd_scenario_hard_denial_when_exhausted PASSED [ 90%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_allowed_when_within_budget PASSED [ 91%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_boundary_condition_exact_ceiling_allowed PASSED [ 92%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_boundary_condition_one_token_over_denied PASSED [ 93%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_invalid_zero_or_negative_request[0] PASSED [ 95%]
 tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_invalid_zero_or_negative_request[-100] PASSED [ 96%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_new_day_resets_allowance PASSED [ 98%]
-tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_allowance_check_is_read_only PASSED [100%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_new_day_resets_allowance PASSED [ 97%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_allowance_check_is_read_only PASSED [ 98%]
+tests/unit/test_story_8_3_hard_denial.py::test_story_8_3_request_larger_than_any_limit_is_an_explained_denial PASSED [100%]
 
-============================= 53 passed in 5.61s ==============================
+============================= 81 passed in 5.56s ==============================
 
 $ ruff check .
 All checks passed!
+
+$ pytest --cov=src --cov-branch
+Name                                      Stmts   Miss Branch BrPart  Cover
+src\__init__.py                               0      0      0      0   100%
+src\adapters\inbound\__init__.py              3      0      0      0   100%
+src\adapters\inbound\errors.py               48      0      0      0   100%
+src\adapters\inbound\router.py               48      1      4      1    96%
+src\adapters\inbound\schemas.py              69      0      0      0   100%
+src\adapters\outbound\__init__.py             5      0      0      0   100%
+src\adapters\outbound\db.py                  33      4      0      0    88%
+src\adapters\outbound\fleet_adapter.py       25      3      6      3    81%
+src\adapters\outbound\migrations.py          10      0      0      0   100%
+src\adapters\outbound\sql_repository.py      46      6      6      2    85%
+src\adapters\outbound\system_clock.py         5      1      0      0    80%
+src\application\__init__.py                   2      0      0      0   100%
+src\application\use_cases.py                 60      1      6      1    97%
+src\composition.py                           29      1      0      0    97%
+src\config.py                                30      0      4      0   100%
+src\domain\__init__.py                        4      0      0      0   100%
+src\domain\exceptions.py                     11      0      0      0   100%
+src\domain\models.py                         60      1      4      1    97%
+src\domain\services.py                       39      0      8      0   100%
+src\main.py                                  25      4      4      2    79%
+src\ports\__init__.py                         4      0      0      0   100%
+src\ports\clock.py                            8      0      0      0   100%
+src\ports\fleet.py                            9      2      0      0    78%
+src\ports\repository.py                       9      0      0      0   100%
+TOTAL                                       582     24     42     10    95%

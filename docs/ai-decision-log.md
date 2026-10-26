@@ -26,6 +26,7 @@ AD-5 single time source and period keys, AD-6 every non-ALLOW decision explained
 | **D-08** | Contracts — review | Claude Code (adversarial code review) | Alexis Delgado | **REJECT & REWRITE** | `docs/contracts/openapi.yaml` described Solu-2 endpoints that Impl-1 does not expose. Replaced by an Impl-1 contract enforced by a test; Solu-2 contract archived. |
 | **D-09** | Error handling — review | Claude Code (adversarial code review) | Alexis Delgado | **MODIFY** | Four different error shapes and a plain-text 500 on token overflow. Unified `ErrorBody` envelope and request bounds. |
 | **D-10** | Architecture & tests — review | Claude Code (adversarial code review) | Alexis Delgado | **MODIFY** | Router built adapters and used the system clock directly; tests depended on the wall-clock date and created `tuqs.db`. Added application layer, composition root, injectable `IClock`, Alembic migrations. |
+| **D-11** | Stories 8.1–8.3 — `bmad-code-review` | Claude Code (Blind Hunter, Edge Case Hunter, Acceptance Auditor) | Alexis Delgado | **DECIDE & PATCH** | 3 decisions resolved by the team (UTC day, required `subject_id`, uncapped `requested_tokens` + BIGINT) and 11 patches applied; 9 items deferred. |
 
 ---
 
@@ -139,3 +140,17 @@ AD-5 single time source and period keys, AD-6 every non-ALLOW decision explained
 - **Adopted Design:** Use cases in `src/application/use_cases.py` depend only on ports; `src/composition.py` is the single composition root and exposes FastAPI providers (`get_clock`, `get_repository`, …) that tests override with `FakeClock` (fixed at 2026-10-25T12:00:00Z). Alembic revision `0001` creates both tables with CHECK constraints; the lifespan runs `alembic upgrade head` when `AUTO_MIGRATE=true`, and the test suite disables it so no file is created.
 - **Verification:** `tests/integration/test_migrations.py` (Alembic schema equals ORM metadata), `test_story_8_3_new_day_resets_allowance` (clock advanced past midnight).
 - **Artifacts Changed:** `src/application/`, `src/composition.py`, `src/adapters/inbound/router.py`, `src/ports/clock.py`, `migrations/`, `alembic.ini`, `tests/conftest.py`, `tests/fixtures/fake_clock.py`.
+
+---
+
+### Entry D-11: BMad Code Review of Stories 8.1–8.3
+- **Phase/Story:** Stories 8.1, 8.2, 8.3 — `bmad-create-story` (retroactive story files) and `bmad-code-review` (2026-10-26)
+- **Persona/Skill:** Claude Code running the BMad workflows; review layers Blind Hunter (diff only), Edge Case Hunter, Acceptance Auditor (against the story files, PRD and ARCHITECTURE).
+- **AI Output (Summary):** 3 decision-needed, 11 patch, 9 defer, 9 dismissed. The Acceptance Auditor confirmed the three BDD scenarios and their boundaries.
+- **Human Decisions (Alexis Delgado):**
+  1. Day boundary: keep 00:00 UTC as the Annex BDD states; AD-5's `America/Bogota` period key is superseded for Impl-1.
+  2. `subject_id` becomes required; the AI-introduced `CS-480` default is removed because it misattributed events (PRD FR-1 requires the course).
+  3. `requested_tokens` has no upper bound; counters move to BIGINT (PRD FR-5, AD-3) so an oversize request is an explained denial, not a 422.
+- **Patches applied:** single clock read per use case (AD-5); migration `0002` to BIGINT; fail-closed reads (AD-7); strict integer token counts; id length/whitespace validation in body and path; correlation-id sanitising; error-subclass mapping; clock fallback in error handlers; settings validation; `%` escaping in the Alembic URL; removal of unused `get_ledger_entries` / `get_node`.
+- **Verification:** 81 tests (was 53), `ruff check .` clean, 95% coverage of `src/`. Each patch has a dedicated test (for example `test_read_paths_fail_closed_on_real_database_error`, `test_upgrade_from_0001_preserves_existing_rows`, `test_story_8_1_missing_subject_is_rejected`).
+- **Artifacts Changed:** commits `84c640d`…`ddcb5b7`; review record in the BMad workspace story files and `deferred-work.md`.

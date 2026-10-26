@@ -3,7 +3,7 @@
 
 [![Python](https://img.shields.io/badge/Python-3.11%20%7C%203.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
-[![Testing](https://img.shields.io/badge/Pytest-53%20Passed%20%7C%200%20Skipped-brightgreen.svg)](docs/test-evidence-impl1.txt)
+[![Testing](https://img.shields.io/badge/Pytest-81%20Passed%20%7C%200%20Skipped-brightgreen.svg)](docs/test-evidence-impl1.txt)
 [![Architecture](https://img.shields.io/badge/Architecture-Hexagonal%20%2F%20Ports%20%26%20Adapters-orange.svg)](#3-architecture--project-layout)
 [![Governance](https://img.shields.io/badge/BMad-Full%20Ceremony%20Build-purple.svg)](docs/sprint-status.yaml)
 
@@ -22,6 +22,7 @@ The **Token Usage & Quota Service (TUQS)** meters token consumption for the univ
 ## 2. Core Implemented Stories (Task Impl-1)
 
 1. **Story 8.1 — Token Consumption Event Ingestion & Ledger Recording** · `POST /api/v1/tokens/events` → `201`
+   - Requires `user_id`, `subject_id` and integer `prompt_tokens` / `completion_tokens`.
    - In one database transaction: provisions the daily `user_quotas` row if absent, increments `tokens_used` in the database (`tokens_used = tokens_used + n`) and appends a `token_ledger` row.
    - Returns the cumulative usage and remaining balance.
 
@@ -31,7 +32,7 @@ The **Token Usage & Quota Service (TUQS)** meters token consumption for the univ
 
 3. **Story 8.3 — Hard Denial Enforcement at 100% Quota Ceiling** · `POST /api/v1/tokens/check-allowance` → `200`
    - `allowed = tokens_used + requested_tokens <= token_limit` (zero tolerance).
-   - A denial returns `reason_code: "DAILY_QUOTA_EXCEEDED"`, `reason: "Daily token quota exhausted; resets at 00:00 UTC"` and `resets_at` (next 00:00 UTC).
+   - No upper bound on `requested_tokens`; a denial returns `reason_code: "DAILY_QUOTA_EXCEEDED"`, `reason: "Daily token quota exhausted; resets at 00:00 UTC"` and `resets_at` (next 00:00 UTC).
 
 4. **Scaffold** — 32-node simulated fleet (31 × 24 GB workstations + 1 server × 2 × 48 GB = 840 GB VRAM), `GET /api/v1/health`, `GET /api/v1/fleet`, Alembic migrations, uniform error envelope.
 
@@ -45,13 +46,13 @@ Ports & Adapters, dependencies pointing inward:
 
 ```text
 academic-ai-compute-tuqs/
-├── alembic.ini · migrations/           # Alembic env + revision 0001 (tables + CHECK constraints)
+├── alembic.ini · migrations/           # Alembic env + 0001 (tables + CHECKs) + 0002 (BIGINT counters)
 ├── docs/
 │   ├── prd.md                          # Scoped module PRD
 │   ├── contracts/openapi.yaml          # Impl-1 OpenAPI 3.1 contract (enforced by test)
 │   ├── contracts/solu2/                # Solu-2 contracts, archived for Impl-2
 │   ├── sprint-status.yaml              # BMad sprint tracking with status history
-│   ├── ai-decision-log.md              # 10 AI interactions, incl. rejected/corrected outputs
+│   ├── ai-decision-log.md              # 11 AI interactions, incl. rejected/corrected outputs
 │   ├── walkthrough-impl1.md            # Implementation walkthrough report
 │   └── test-evidence-impl1.txt         # Raw pytest -v and ruff output
 ├── src/
@@ -85,7 +86,7 @@ pytest
 uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-- `pytest` runs 53 tests deterministically (fixed `FakeClock`, in-memory database) and writes no files.
+- `pytest` runs 81 tests deterministically (fixed `FakeClock`, in-memory database) and writes no files.
 - On startup the service applies Alembic migrations to `DATABASE_URL` (default `sqlite:///./tuqs.db`). Set `AUTO_MIGRATE=false` to manage them yourself with `alembic upgrade head`.
 - Docs: [http://localhost:8000/docs](http://localhost:8000/docs) · Health: [http://localhost:8000/api/v1/health](http://localhost:8000/api/v1/health)
 - Lint: `ruff check .`
@@ -170,7 +171,7 @@ Every non-2xx response uses one envelope and echoes `X-Correlation-ID`:
   "details": null
 }
 ```
-Codes: `ERR_INVALID_TOKEN_COUNT` (400), `ERR_VALIDATION` (422), `ERR_NOT_FOUND` (404), `ERR_METHOD_NOT_ALLOWED` (405), `ERR_STORAGE_UNAVAILABLE` (503 + `Retry-After: 5`), `ERR_INTERNAL` (500).
+Codes: `ERR_INVALID_TOKEN_COUNT` (400), `ERR_VALIDATION` (422), `ERR_NOT_FOUND` (404), `ERR_METHOD_NOT_ALLOWED` (405), `ERR_STORAGE_UNAVAILABLE` (503 + `Retry-After: 5`, on reads and writes), `ERR_INTERNAL` (500). A client `X-Correlation-ID` is echoed only if it matches `[A-Za-z0-9._-]{1,128}`.
 
 ---
 
@@ -183,9 +184,9 @@ ruff check .
 ```
 
 ```text
-============================= 53 passed in 5.61s ==============================
+============================= 81 passed ==============================
 All checks passed!
-TOTAL coverage of src/ (lines + branches): 92%
+TOTAL coverage of src/ (lines + branches): 95%
 ```
 
 Full output: [`docs/test-evidence-impl1.txt`](docs/test-evidence-impl1.txt). Known limitations are listed in the [walkthrough](docs/walkthrough-impl1.md#6-known-limitations).
