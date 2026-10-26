@@ -1,0 +1,145 @@
+# docs/sprint-status.yaml
+# BMad Method Sprint Tracking File - Task Impl-1
+# Module 8: Token Usage & Quota Service (TUQS)
+# Authors: Alexis Delgado (Lead Architect) & Valentina Gómez (Test Lead)
+# Implementation Sprint: Foundation Scaffold + 3 Core Stories (Annex, Module 8)
+# Status lifecycle: ready-for-dev -> in-progress -> ready-for-review -> done
+
+sprint_id: "IMPL-1-FOUNDATION-BUILD"
+target_system: "Academic AI Compute Fabric"
+module: "Module 8: Token Usage & Quota Service (TUQS)"
+status: "COMPLETED"
+generated_date: "2026-10-25"
+sign_off:
+  architect_lead: "Alexis Delgado"
+  test_lead: "Valentina Gómez"
+  verdict: "ALL_STORIES_DONE_AND_VERIFIED"
+
+# Impl-1 implements the Annex stories; mapping to the Solu-2 backlog (Planning/epics.md)
+solu2_backlog_mapping:
+  STORY-8.1: "Solu-2 Story 2.1 (Usage Settlement Ingress & Ledger Recording), simplified: no reservation"
+  STORY-8.2: "Solu-2 Story 3.3 (80% Soft Warning), header part only; outbox notification deferred"
+  STORY-8.3: "Solu-2 Story 1.3 (Explainable Denial Decision Engine), single student bucket"
+
+scaffold:
+  id: "SCAFFOLD"
+  status: "done"
+  history:
+    - { date: "2026-10-25", status: "ready-for-dev" }
+    - { date: "2026-10-25", status: "in-progress" }
+    - { date: "2026-10-25", status: "ready-for-review" }
+    - { date: "2026-10-25", status: "in-progress", note: "review rework D-10: application layer, IClock injection, Alembic" }
+    - { date: "2026-10-25", status: "done" }
+  deliverables:
+    - "Ports & Adapters layout: src/domain, src/application, src/ports, src/adapters/{inbound,outbound}"
+    - "Composition root: src/composition.py"
+    - "Alembic migration 0001 (user_quotas, token_ledger + CHECK constraints)"
+    - "Fleet fixture: 32 nodes, 840 GB VRAM"
+  test_files:
+    - "tests/unit/test_fleet_and_health.py"
+    - "tests/integration/test_migrations.py"
+    - "tests/contract/test_openapi_contract.py"
+
+stories:
+  - id: "STORY-8.1"
+    name: "Token Consumption Event Ingestion & Ledger Recording"
+    assignee: "Amelia (Developer Agent) supervised by Alexis Delgado"
+    ceremony_type: "full-ceremony"
+    status: "done"
+    history:
+      - { date: "2026-10-25", status: "ready-for-dev" }
+      - { date: "2026-10-25", status: "in-progress" }
+      - { date: "2026-10-25", status: "ready-for-review" }
+      - { date: "2026-10-25", status: "in-progress", note: "review rework D-07: lost update under concurrency" }
+      - { date: "2026-10-25", status: "done" }
+    endpoints:
+      - "POST /api/v1/tokens/events"
+    tables_affected:
+      - "user_quotas"
+      - "token_ledger"
+    definition_of_done:
+      code_implemented: true
+      invariants_upheld:
+        - "AD-1: counter increment and ledger append in one transaction (in-database increment)"
+        - "AD-4: append-only ledger; counter equals sum of ledger deltas (concurrency test)"
+        - "AD-5: event timestamp and period key from the injected IClock"
+      test_files:
+        - "tests/unit/test_story_8_1_ledger_ingestion.py"
+        - "tests/integration/test_atomic_consumption.py"
+      tests_passing: 8
+      zero_skipped_tests: true
+      documentation_updated: true
+
+  - id: "STORY-8.2"
+    name: "Soft-Warning Header at 80% Quota Threshold"
+    assignee: "Amelia (Developer Agent) supervised by Valentina Gómez"
+    ceremony_type: "full-ceremony"
+    status: "done"
+    history:
+      - { date: "2026-10-25", status: "ready-for-dev" }
+      - { date: "2026-10-25", status: "in-progress" }
+      - { date: "2026-10-25", status: "ready-for-review" }
+      - { date: "2026-10-25", status: "in-progress", note: "review rework D-04/D-08: header value per PRD FR-11" }
+      - { date: "2026-10-25", status: "done" }
+    endpoints:
+      - "POST /api/v1/tokens/events"
+      - "GET /api/v1/tokens/balance/{user_id}"
+      - "POST /api/v1/tokens/check-allowance"
+    tables_affected:
+      - "user_quotas (read)"
+    definition_of_done:
+      code_implemented: true
+      requirements_upheld:
+        - "PRD FR-11: X-Quota-Warning: 80 and X-Quota-Remaining on every response while usage >= 80%"
+        - "Annex BDD: body status QUOTA_WARNING_80_PERCENT, 18,000 tokens remaining at 82,000/100,000"
+      headers_injected:
+        - "X-Quota-Warning: 80"
+        - "X-Quota-Remaining"
+        - "X-Quota-Reset"
+      test_files:
+        - "tests/unit/test_story_8_2_soft_warning.py"
+      tests_passing: 7
+      zero_skipped_tests: true
+      documentation_updated: true
+
+  - id: "STORY-8.3"
+    name: "Hard Denial Enforcement at 100% Quota Ceiling"
+    assignee: "Amelia (Developer Agent) supervised by Alexis Delgado"
+    ceremony_type: "full-ceremony"
+    status: "done"
+    history:
+      - { date: "2026-10-25", status: "ready-for-dev" }
+      - { date: "2026-10-25", status: "in-progress" }
+      - { date: "2026-10-25", status: "ready-for-review" }
+      - { date: "2026-10-25", status: "in-progress", note: "review rework D-09: reason_code, ISO resets_at, ErrorBody" }
+      - { date: "2026-10-25", status: "done" }
+    endpoints:
+      - "POST /api/v1/tokens/check-allowance"
+    tables_affected:
+      - "user_quotas (read)"
+    definition_of_done:
+      code_implemented: true
+      invariants_upheld:
+        - "AD-3: allowed only if tokens_used + requested <= token_limit (zero tolerance)"
+        - "AD-6: every denial carries reason_code DAILY_QUOTA_EXCEEDED and a human-readable reason"
+        - "AD-5: resets_at is the next 00:00 UTC from the injected IClock"
+      test_files:
+        - "tests/unit/test_story_8_3_hard_denial.py"
+      tests_passing: 8
+      zero_skipped_tests: true
+      documentation_updated: true
+
+deferred_to_impl2:
+  - "Solu-2 reserveTokens / commitUsage / releaseExpiredReservations (docs/contracts/solu2/)"
+  - "AD-2 idempotency keys on writes"
+  - "Group and course buckets; 80% notification outbox with de-duplication"
+
+quality_summary:
+  # Measured: pytest -v and pytest --cov=src --cov-branch on 2026-10-25 (docs/test-evidence-impl1.txt)
+  total_tests: 53
+  passed_tests: 53
+  failed_tests: 0
+  skipped_tests: 0
+  pass_rate: "100%"
+  line_and_branch_coverage_src: "92%"
+  lint: "ruff check . -> All checks passed"
