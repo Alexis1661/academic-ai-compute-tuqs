@@ -1,0 +1,326 @@
+{
+  "cluster_name": "Academic AI Compute Fabric",
+  "total_nodes": 32,
+  "nodes": [
+    {
+      "node_id": "ws-01",
+      "hostname": "workstation-lab-01.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 68
+    },
+    {
+      "node_id": "ws-02",
+      "hostname": "workstation-lab-02.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 71
+    },
+    {
+      "node_id": "ws-03",
+      "hostname": "workstation-lab-03.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 65
+    },
+    {
+      "node_id": "ws-04",
+      "hostname": "workstation-lab-04.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 72
+    },
+    {
+      "node_id": "ws-05",
+      "hostname": "workstation-lab-05.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 69
+    },
+    {
+      "node_id": "ws-06",
+      "hostname": "workstation-lab-06.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 74
+    },
+    {
+      "node_id": "ws-07",
+      "hostname": "workstation-lab-07.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 66
+    },
+    {
+      "node_id": "ws-08",
+      "hostname": "workstation-lab-08.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 70
+    },
+    {
+      "node_id": "ws-09",
+      "hostname": "workstation-lab-09.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 73
+    },
+    {
+      "node_id": "ws-10",
+      "hostname": "workstation-lab-10.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 67
+    },
+    {
+      "node_id": "ws-11",
+      "hostname": "workstation-lab-11.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 75
+    },
+    {
+      "node_id": "ws-12",
+      "hostname": "workstation-lab-12.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 68
+    },
+    {
+      "node_id": "ws-13",
+      "hostname": "workstation-lab-13.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 69
+    },
+    {
+      "node_id": "ws-14",
+      "hostname": "workstation-lab-14.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 70
+    },
+    {
+      "node_id": "ws-15",
+      "hostname": "workstation-lab-15.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 72
+    },
+    {
+      "node_id": "ws-16",
+      "hostname": "workstation-lab-16.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 66
+    },
+    {
+      "node_id": "ws-17",
+      "hostname": "workstation-lab-17.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 67
+    },
+    {
+      "node_id": "ws-18",
+      "hostname": "workstation-lab-18.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 71
+    },
+    {
+      "node_id": "ws-19",
+      "hostname": "workstation-lab-19.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 74
+    },
+    {
+      "node_id": "ws-20",
+      "hostname": "workstation-lab-20.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 69
+    },
+    {
+      "node_id": "ws-21",
+      "hostname": "workstation-lab-21.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 70
+    },
+    {
+      "node_id": "ws-22",
+      "hostname": "workstation-lab-22.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 68
+    },
+    {
+      "node_id": "ws-23",
+      "hostname": "workstation-lab-23.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 73
+    },
+    {
+      "node_id": "ws-24",
+      "hostname": "workstation-lab-24.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 75
+    },
+    {
+      "node_id": "ws-25",
+      "hostname": "workstation-lab-25.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 67
+    },
+    {
+      "node_id": "ws-26",
+      "hostname": "workstation-lab-26.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 68
+    },
+    {
+      "node_id": "ws-27",
+      "hostname": "workstation-lab-27.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 71
+    },
+    {
+      "node_id": "ws-28",
+      "hostname": "workstation-lab-28.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 70
+    },
+    {
+      "node_id": "ws-29",
+      "hostname": "workstation-lab-29.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 69
+    },
+    {
+      "node_id": "ws-30",
+      "hostname": "workstation-lab-30.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 72
+    },
+    {
+      "node_id": "ws-31",
+      "hostname": "workstation-lab-31.univ.edu",
+      "node_type": "WORKSTATION",
+      "gpu_count": 1,
+      "vram_gb_per_gpu": 24,
+      "total_vram_gb": 24,
+      "status": "HEALTHY",
+      "temperature_celsius": 68
+    },
+    {
+      "node_id": "srv-01",
+      "hostname": "server-cluster-main.univ.edu",
+      "node_type": "SERVER",
+      "gpu_count": 2,
+      "vram_gb_per_gpu": 48,
+      "total_vram_gb": 96,
+      "status": "HEALTHY",
+      "temperature_celsius": 62
+    }
+  ]
+}
