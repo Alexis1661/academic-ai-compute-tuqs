@@ -1,0 +1,337 @@
+openapi: 3.1.0
+info:
+  title: Token Usage and Quota Service (TUQS) API
+  version: 1.0.0
+  description: >
+    Module 8 of the Academic AI Compute Management Platform.
+    Authoritative service governing token reservations, multi-tier budget allocations,
+    atomic admission decisions, and compute consumption settlement.
+paths:
+  /v1/quota/reserve:
+    post:
+      summary: Reserve token quota for inference stream
+      description: >
+        Acquires row-level locks on hierarchy buckets (Student -> Group -> Course)
+        and evaluates policy rules atomically. Returns immediate ALLOW, CONSTRAIN, or DENY.
+      operationId: reserveTokens
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReserveTokensRequestDTO'
+      responses:
+        '200':
+          description: Quota successfully reserved (ALLOW or CONSTRAIN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDecisionDTO'
+        '403':
+          description: Enrollment or allocation policy failure
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+        '422':
+          description: Input validation failure or idempotency payload mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+        '429':
+          description: Token quota exhausted (DENY) with explainable trace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDecisionDTO'
+        '503':
+          description: Service saturated or database lock timeout
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+
+  /v1/quota/settle:
+    post:
+      summary: Settle actual token consumption
+      description: >
+        Finalizes an inference session, credits back unused reserved tokens,
+        charges actual consumed tokens to the balance ledger, and calculates GPU-seconds.
+      operationId: commitUsage
+      parameters:
+        - name: Idempotency-Key
+          in: header
+          required: true
+          schema:
+            type: string
+            minLength: 8
+            maxLength: 128
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommitUsageRequestDTO'
+      responses:
+        '200':
+          description: Usage settled and ledger updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageSettlementDTO'
+        '404':
+          description: Unknown reservation ID or model ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+        '422':
+          description: Sum of prompt and completion tokens mismatch
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+
+  /v1/admin/allocations:
+    post:
+      summary: Modify course token allocation
+      description: >
+        Updates daily limit, student defaults, or policy with optimistic locking.
+      operationId: updateAllocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AllocationMutationDTO'
+      responses:
+        '200':
+          description: Allocation updated
+        '409':
+          description: Optimistic locking version conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBodyDTO'
+
+components:
+  schemas:
+    ReserveTokensRequestDTO:
+      type: object
+      required:
+        - request_id
+        - subject_type
+        - subject_id
+        - course_id
+        - requested_tokens
+        - idempotency_key
+      properties:
+        request_id:
+          type: string
+          format: uuid
+        subject_type:
+          type: string
+          enum: [student, group, course]
+        subject_id:
+          type: string
+          maxLength: 64
+        course_id:
+          type: string
+          maxLength: 64
+        requested_tokens:
+          type: integer
+          minimum: 1
+          maximum: 32768
+        idempotency_key:
+          type: string
+        ttl_seconds:
+          type: integer
+          default: 300
+          minimum: 30
+          maximum: 3600
+
+    ReservationDecisionDTO:
+      type: object
+      required:
+        - decision
+        - granted_tokens
+        - trace
+      properties:
+        decision:
+          type: string
+          enum: [ALLOW, DENY, CONSTRAIN]
+        reservation_id:
+          type: string
+          format: uuid
+          nullable: true
+        granted_tokens:
+          type: integer
+          minimum: 0
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        trace:
+          $ref: '#/components/schemas/DecisionTraceDTO'
+
+    DecisionTraceDTO:
+      type: object
+      required:
+        - rule_id
+        - suggested_action
+        - policy_applied
+      properties:
+        rule_id:
+          type: string
+          example: QR_001
+        failing_bucket:
+          type: string
+          nullable: true
+        limit:
+          type: integer
+          nullable: true
+        consumed:
+          type: integer
+          nullable: true
+        reserved:
+          type: integer
+          nullable: true
+        requested:
+          type: integer
+          nullable: true
+        available:
+          type: integer
+          nullable: true
+        reset_at:
+          type: string
+          format: date-time
+          nullable: true
+        all_failing_buckets:
+          type: array
+          items:
+            type: string
+        suggested_action:
+          type: string
+        policy_applied:
+          type: string
+          enum: [DENY, CLAMP]
+
+    CommitUsageRequestDTO:
+      type: object
+      required:
+        - reservation_id
+        - model_id
+        - prompt_tokens
+        - completion_tokens
+        - actual_tokens
+        - idempotency_key
+      properties:
+        reservation_id:
+          type: string
+          format: uuid
+        model_id:
+          type: string
+        prompt_tokens:
+          type: integer
+          minimum: 0
+        completion_tokens:
+          type: integer
+          minimum: 0
+        actual_tokens:
+          type: integer
+          minimum: 0
+        idempotency_key:
+          type: string
+
+    UsageSettlementDTO:
+      type: object
+      required:
+        - status
+        - event_id
+        - actual_tokens
+        - refunded_tokens
+        - gpu_seconds
+        - occurred_at
+      properties:
+        status:
+          type: string
+          enum: [SETTLED, SETTLED_LATE, ALREADY_SETTLED]
+        event_id:
+          type: string
+          format: uuid
+        actual_tokens:
+          type: integer
+        refunded_tokens:
+          type: integer
+        overrun_tokens:
+          type: integer
+        gpu_seconds:
+          type: number
+        occurred_at:
+          type: string
+          format: date-time
+
+    AllocationMutationDTO:
+      type: object
+      required:
+        - course_id
+        - daily_limit
+        - monthly_ceiling
+        - student_default_daily
+        - version
+        - reason
+      properties:
+        course_id:
+          type: string
+        daily_limit:
+          type: integer
+          minimum: 1
+        monthly_ceiling:
+          type: integer
+          minimum: 1
+        student_default_daily:
+          type: integer
+          minimum: 1
+        on_insufficient:
+          type: string
+          enum: [DENY, CLAMP]
+          default: DENY
+        version:
+          type: integer
+        reason:
+          type: string
+
+    ErrorBodyDTO:
+      type: object
+      required:
+        - error_code
+        - message
+        - correlation_id
+        - timestamp
+      properties:
+        error_code:
+          type: string
+        message:
+          type: string
+        correlation_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+          nullable: true

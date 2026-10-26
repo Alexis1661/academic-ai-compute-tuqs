@@ -1,0 +1,441 @@
+openapi: 3.1.0
+info:
+  title: Token Usage and Quota Service (TUQS) API - Impl-1 slice
+  version: 1.1.0
+  description: >
+    Module 8 of the Academic AI Compute Management Platform. This is the authoritative
+    contract for the Impl-1 slice (Annex stories 8.1, 8.2, 8.3 plus scaffold probes).
+    It is enforced by tests/contract/test_openapi_contract.py against the running app.
+    The Solu-2 reservation contract (reserveTokens / commitUsage / sweeper) is kept,
+    unchanged, in docs/contracts/solu2/ and is scheduled for Impl-2.
+servers:
+  - url: http://localhost:8000
+
+paths:
+  /:
+    get:
+      summary: Service identification
+      operationId: root
+      responses:
+        '200':
+          description: Service metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RootResponse'
+
+  /api/v1/tokens/events:
+    post:
+      summary: Ingest token consumption event (Story 8.1 & Story 8.2)
+      description: >
+        In one database transaction: provisions the user's daily quota row if absent,
+        increments tokens_used in the database (tokens_used = tokens_used + total) and
+        appends an immutable token_ledger entry (AD-1, AD-4). Consumption is metered as
+        reported, so tokens_used may exceed token_limit (overrun is logged); admission is
+        enforced by /tokens/check-allowance.
+      operationId: ingestTokenEvent
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenEventRequest'
+      responses:
+        '201':
+          description: Event recorded in the ledger and daily quota updated
+          headers:
+            X-Quota-Remaining:
+              $ref: '#/components/headers/X-Quota-Remaining'
+            X-Quota-Reset:
+              $ref: '#/components/headers/X-Quota-Reset'
+            X-Quota-Warning:
+              $ref: '#/components/headers/X-Quota-Warning'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenEventResponse'
+        '400':
+          description: Domain rule violation (ERR_INVALID_TOKEN_COUNT, e.g. 0 + 0 tokens)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '422':
+          description: Payload failed schema validation (ERR_VALIDATION)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '503':
+          description: Quota store unavailable; nothing was recorded (ERR_STORAGE_UNAVAILABLE, AD-7)
+          headers:
+            Retry-After:
+              schema:
+                type: integer
+                example: 5
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
+  /api/v1/tokens/check-allowance:
+    post:
+      summary: Check token allowance and enforce 100% hard denial (Story 8.3)
+      description: >
+        allowed = (tokens_used + requested_tokens) <= token_limit. A denial is a business
+        decision, returned as 200 with allowed=false, reason_code DAILY_QUOTA_EXCEEDED and
+        reason "Daily token quota exhausted; resets at 00:00 UTC" (AD-3, AD-6).
+        Read-only: does not create quota rows.
+      operationId: checkAllowance
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckAllowanceRequest'
+      responses:
+        '200':
+          description: Allowance decision (allowed true or false)
+          headers:
+            X-Quota-Remaining:
+              $ref: '#/components/headers/X-Quota-Remaining'
+            X-Quota-Reset:
+              $ref: '#/components/headers/X-Quota-Reset'
+            X-Quota-Warning:
+              $ref: '#/components/headers/X-Quota-Warning'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CheckAllowanceResponse'
+        '422':
+          description: Payload failed schema validation (ERR_VALIDATION)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '503':
+          description: Quota store unavailable (ERR_STORAGE_UNAVAILABLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
+  /api/v1/tokens/balance/{user_id}:
+    get:
+      summary: Query current quota balance and soft-warning status (Story 8.2)
+      description: >
+        Read-only. A user without a row today is reported with the default daily limit
+        and zero usage.
+      operationId: getQuotaBalance
+      parameters:
+        - name: user_id
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Current balance; warning.status = QUOTA_WARNING_80_PERCENT while usage >= 80%
+          headers:
+            X-Quota-Remaining:
+              $ref: '#/components/headers/X-Quota-Remaining'
+            X-Quota-Reset:
+              $ref: '#/components/headers/X-Quota-Reset'
+            X-Quota-Warning:
+              $ref: '#/components/headers/X-Quota-Warning'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/QuotaBalanceResponse'
+        '422':
+          description: Invalid path parameter (ERR_VALIDATION)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+        '503':
+          description: Quota store unavailable (ERR_STORAGE_UNAVAILABLE)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorBody'
+
+  /api/v1/health:
+    get:
+      summary: Subsystem health and fleet topology probe
+      operationId: health
+      responses:
+        '200':
+          description: Database reachable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Database unreachable (status degraded)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /api/v1/fleet:
+    get:
+      summary: Simulated 32-node compute cluster inventory
+      operationId: fleet
+      responses:
+        '200':
+          description: 31 workstations x 24 GB + 1 server x 2 x 48 GB (840 GB VRAM)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FleetResponse'
+
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: Echoed in ErrorBody.correlation_id and the response header; generated if absent.
+      schema:
+        type: string
+
+  headers:
+    X-Quota-Remaining:
+      description: Tokens left before hard denial, max(0, token_limit - tokens_used).
+      schema:
+        type: integer
+    X-Quota-Reset:
+      description: Next daily reset, ISO-8601 UTC (next 00:00Z).
+      schema:
+        type: string
+        format: date-time
+    X-Quota-Warning:
+      description: Present only while usage >= 80% of the daily limit (PRD FR-11). Value is the threshold percent.
+      schema:
+        type: string
+        example: '80'
+
+  schemas:
+    TokenEventRequest:
+      type: object
+      required: [user_id, prompt_tokens, completion_tokens]
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        subject_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          default: CS-480
+        prompt_tokens:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+        completion_tokens:
+          type: integer
+          minimum: 0
+          maximum: 1000000
+
+    TokenEventResponse:
+      type: object
+      required:
+        - id
+        - user_id
+        - subject_id
+        - prompt_tokens
+        - completion_tokens
+        - total_tokens
+        - tokens_used
+        - token_limit
+        - remaining_balance
+        - warning
+        - timestamp
+      properties:
+        id:
+          type: string
+          description: Ledger entry UUID
+        user_id:
+          type: string
+        subject_id:
+          type: string
+        prompt_tokens:
+          type: integer
+        completion_tokens:
+          type: integer
+        total_tokens:
+          type: integer
+        tokens_used:
+          type: integer
+        token_limit:
+          type: integer
+        remaining_balance:
+          type: integer
+        warning:
+          $ref: '#/components/schemas/QuotaWarningDTO'
+        timestamp:
+          type: string
+          format: date-time
+
+    QuotaWarningDTO:
+      type: object
+      required: [warning, threshold, remaining_tokens_before_denial]
+      properties:
+        warning:
+          type: boolean
+        threshold:
+          type: string
+          example: 80%
+        status:
+          type: [string, 'null']
+          example: QUOTA_WARNING_80_PERCENT
+        remaining_tokens_before_denial:
+          type: integer
+        message:
+          type: [string, 'null']
+
+    CheckAllowanceRequest:
+      type: object
+      required: [user_id, requested_tokens]
+      properties:
+        user_id:
+          type: string
+          minLength: 1
+          maxLength: 64
+        requested_tokens:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 1000000
+
+    CheckAllowanceResponse:
+      type: object
+      required:
+        - allowed
+        - requested_tokens
+        - remaining_balance
+        - tokens_used
+        - token_limit
+        - resets_at
+      properties:
+        allowed:
+          type: boolean
+        reason:
+          type: [string, 'null']
+          example: Daily token quota exhausted; resets at 00:00 UTC
+        reason_code:
+          type: [string, 'null']
+          enum: [DAILY_QUOTA_EXCEEDED, null]
+        requested_tokens:
+          type: integer
+        remaining_balance:
+          type: integer
+        tokens_used:
+          type: integer
+        token_limit:
+          type: integer
+        resets_at:
+          type: string
+          format: date-time
+
+    QuotaBalanceResponse:
+      type: object
+      required:
+        - user_id
+        - date
+        - tokens_used
+        - token_limit
+        - remaining_balance
+        - percentage_used
+        - resets_at
+        - warning
+      properties:
+        user_id:
+          type: string
+        date:
+          type: string
+          description: UTC date YYYY-MM-DD
+        tokens_used:
+          type: integer
+        token_limit:
+          type: integer
+        remaining_balance:
+          type: integer
+        percentage_used:
+          type: number
+        resets_at:
+          type: string
+          format: date-time
+        warning:
+          $ref: '#/components/schemas/QuotaWarningDTO'
+
+    HealthResponse:
+      type: object
+      required: [status, database, cluster, timestamp]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        database:
+          type: string
+          enum: [healthy, unhealthy]
+        cluster:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+
+    FleetResponse:
+      type: object
+      required: [cluster_summary, nodes]
+      properties:
+        cluster_summary:
+          type: object
+        nodes:
+          type: array
+          items:
+            type: object
+
+    RootResponse:
+      type: object
+      required: [service, module, version, documentation, health]
+      properties:
+        service:
+          type: string
+        module:
+          type: string
+        version:
+          type: string
+        documentation:
+          type: string
+        health:
+          type: string
+
+    ErrorBody:
+      type: object
+      required: [error_code, message, correlation_id, timestamp]
+      properties:
+        error_code:
+          type: string
+          enum:
+            - ERR_INVALID_TOKEN_COUNT
+            - ERR_VALIDATION
+            - ERR_NOT_FOUND
+            - ERR_METHOD_NOT_ALLOWED
+            - ERR_STORAGE_UNAVAILABLE
+            - ERR_INTERNAL
+        message:
+          type: string
+        correlation_id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: [object, 'null']
