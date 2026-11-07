@@ -387,9 +387,9 @@ def student_quota_dashboard(
         meter_state = "green"
 
     return templates.TemplateResponse(
-        "quota_dashboard.html",
-        {
-            "request": request,
+        request=request,
+        name="quota_dashboard.html",
+        context={
             "user_id": quota.user_id,
             "date": quota.date,
             "tokens_used": quota.tokens_used,
