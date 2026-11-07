@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Token Usage Dashboard — {{ user_id }}</title>
+  <style>
+    /* ------------------------------------------------------------------ */
+    /* Base layout                                                          */
+    /* ------------------------------------------------------------------ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #f5f7fa;
+      color: #1a1a2e;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .container { max-width: 760px; margin: 0 auto; }
+    h1 { font-size: 1.6rem; font-weight: 700; margin-bottom: 0.25rem; }
+    .subtitle { color: #666; font-size: 0.9rem; margin-bottom: 2rem; }
+
+    /* ------------------------------------------------------------------ */
+    /* Alert banner (Story 8.6 BDD: "Daily Quota Depleted…")               */
+    /* ------------------------------------------------------------------ */
+    #quota-breach-banner {
+      display: none;                /* hidden until quota is 100% depleted */
+      align-items: flex-start;
+      gap: 0.75rem;
+      background: #d32f2f;
+      color: #fff;
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin-bottom: 1.5rem;
+      animation: pulse-border 1.5s infinite;
+    }
+    #quota-breach-banner.visible { display: flex; }
+    #quota-breach-banner .icon { font-size: 1.5rem; line-height: 1; }
+    #quota-breach-banner .text { display: flex; flex-direction: column; gap: 0.2rem; }
+    #quota-breach-banner .text strong { font-size: 1rem; }
+    #quota-breach-banner .text span  { font-size: 0.85rem; opacity: 0.9; }
+    @keyframes pulse-border {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
+      50%       { box-shadow: 0 0 0 6px rgba(211, 47, 47, 0); }
+    }
+
+    /* 80% soft-warning banner */
+    #quota-warning-banner {
+      display: none;
+      align-items: center;
+      gap: 0.75rem;
+      background: #ff8f00;
+      color: #fff;
+      border-radius: 8px;
+      padding: 0.85rem 1.25rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+    }
+    #quota-warning-banner.visible { display: flex; }
+
+    /* ------------------------------------------------------------------ */
+    /* Quota meter card                                                     */
+    /* ------------------------------------------------------------------ */
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      margin-bottom: 1.5rem;
+    }
+    .card-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; margin-bottom: 0.75rem; }
+
+    /* Numeric counters */
+    .counters { display: flex; gap: 2rem; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .counter-item { display: flex; flex-direction: column; gap: 0.15rem; }
+    .counter-label { font-size: 0.75rem; color: #888; }
+    .counter-value { font-size: 1.75rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #tokens-used-value   { color: #1a1a2e; }
+    #token-limit-value   { color: #1a1a2e; }
+    #tokens-remaining-value { color: #2e7d32; }
+
+    /* Meter bar */
+    .meter-track {
+      background: #e8ecef;
+      border-radius: 999px;
+      height: 22px;
+      overflow: hidden;
+      position: relative;
+    }
+    #meter-bar {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s ease, background-color 0.4s ease;
+      background-color: #2e7d32;  /* Green */
+      min-width: 2px;
+    }
+    /* Colour transitions driven by JS data attribute */
+    #meter-bar[data-state="green"]  { background-color: #2e7d32; }
+    #meter-bar[data-state="amber"]  { background-color: #ff8f00; }
+    #meter-bar[data-state="red"]    { background-color: #d32f2f; }
+
+    .meter-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.4rem;
+    }
+    #percent-label { font-weight: 600; }
+
+    /* ------------------------------------------------------------------ */
+    /* Resets-at info                                                       */
+    /* ------------------------------------------------------------------ */
+    .resets-at { font-size: 0.82rem; color: #888; margin-top: 0.5rem; }
+
+    /* ------------------------------------------------------------------ */
+    /* Auto-refresh badge                                                   */
+    /* ------------------------------------------------------------------ */
+    .refresh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      color: #555;
+      margin-bottom: 1rem;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #2e7d32; animation: blink 2s infinite; }
+    @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Token Usage Dashboard</h1>
+    <p class="subtitle">Student: <strong>{{ user_id }}</strong> &mdash; Daily quota period: <span id="quota-date">{{ date }}</span></p>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Quota Breach Alert Banner (Story 8.6 BDD)                         -->
+    <!-- ---------------------------------------------------------------- -->
+    <div id="quota-breach-banner" role="alert" aria-live="assertive" aria-atomic="true">
+      <span class="icon">🚫</span>
+      <div class="text">
+        <strong id="breach-title">Daily Quota Depleted: Model Access Paused Until Midnight</strong>
+        <span id="breach-subtitle">All AI model requests are throttled. Your quota resets at 00:00 UTC.</span>
+      </div>
+    </div>
+
+    <!-- 80% Warning Banner -->
+    <div id="quota-warning-banner" role="alert" aria-live="polite">
+      <span>⚠️</span>
+      <span id="warning-message">Warning: approaching daily token limit.</span>
+    </div>
+
+    <!-- ---------------------------------------------------------------- -->
+    <!-- Token Meter Card                                                   -->
+    <!-- ---------------------------------------------------------------- -->
+    <div class="card">
+      <div class="card-title">Daily Token Consumption</div>
+
+      <div class="counters">
+        <div class="counter-item">
+          <span class="counter-label">Tokens Used</span>
+          <span class="counter-value" id="tokens-used-value">{{ tokens_used }}</span>
+        </div>
+        <div class="counter-item">
+          <span class="counter-label">Daily Limit</span>
+          <span class="counter-value" id="token-limit-value">{{ token_limit }}</span>
+        </div>
+        <div class="counter-item">
+          <span class="counter-label">Remaining</span>
+          <span class="counter-value" id="tokens-remaining-value">{{ remaining_balance }}</span>
+        </div>
+      </div>
+
+      <!-- Progress bar / meter -->
+      <div class="meter-track" role="progressbar"
+           aria-valuenow="{{ percentage_used }}"
+           aria-valuemin="0"
+           aria-valuemax="100"
+           aria-label="Daily token consumption meter">
+        <div id="meter-bar"
+             data-state="{{ meter_state }}"
+             style="width: {{ [percentage_used, 100] | min }}%"></div>
+      </div>
+      <div class="meter-label">
+        <span>0</span>
+        <span id="percent-label">{{ percentage_used }}%</span>
+        <span>100%</span>
+      </div>
+
+      <p class="resets-at">🕛 Resets at: <strong id="resets-at-label">{{ resets_at }}</strong></p>
+    </div>
+
+    <div class="refresh-badge">
+      <span class="dot"></span>
+      <span>Live — refreshing every <span id="interval-label">5</span>s</span>
+    </div>
+  </div>
+
+  <!-- ------------------------------------------------------------------ -->
+  <!-- Client-side live update script (polls /api/v1/tokens/balance/:id)   -->
+  <!-- ------------------------------------------------------------------ -->
+  <script>
+    const USER_ID = {{ user_id | tojson }};
+    const POLL_INTERVAL_MS = 5000;
+
+    function meterState(pct) {
+      if (pct >= 100) return "red";
+      if (pct >= 80)  return "amber";
+      return "green";
+    }
+
+    function formatNumber(n) {
+      return Number(n).toLocaleString();
+    }
+
+    function applyData(data) {
+      const pct = Math.min(parseFloat(data.percentage_used) || 0, 100);
+      const state = meterState(pct);
+
+      // Numeric counters
+      document.getElementById("tokens-used-value").textContent    = formatNumber(data.tokens_used);
+      document.getElementById("token-limit-value").textContent    = formatNumber(data.token_limit);
+      document.getElementById("tokens-remaining-value").textContent = formatNumber(data.remaining_balance);
+
+      // Meter bar
+      const bar = document.getElementById("meter-bar");
+      bar.style.width   = `${pct}%`;
+      bar.dataset.state = state;
+
+      // Remaining counter colour
+      const remEl = document.getElementById("tokens-remaining-value");
+      remEl.style.color = state === "red" ? "#d32f2f" : state === "amber" ? "#ff8f00" : "#2e7d32";
+
+      // ARIA
+      bar.closest("[role=progressbar]").setAttribute("aria-valuenow", pct);
+
+      // Percent label
+      document.getElementById("percent-label").textContent = `${pct.toFixed(2)}%`;
+
+      // Resets-at
+      if (data.resets_at) {
+        document.getElementById("resets-at-label").textContent = data.resets_at;
+      }
+
+      // Warning banner (80–99%)
+      const warnBanner = document.getElementById("quota-warning-banner");
+      if (pct >= 80 && pct < 100) {
+        document.getElementById("warning-message").textContent =
+          `Warning: ${pct.toFixed(1)}% of daily tokens consumed. ` +
+          `${formatNumber(data.remaining_balance)} tokens remain before hard denial.`;
+        warnBanner.classList.add("visible");
+      } else {
+        warnBanner.classList.remove("visible");
+      }
+
+      // Breach banner (100%)
+      const breachBanner = document.getElementById("quota-breach-banner");
+      if (pct >= 100) {
+        breachBanner.classList.add("visible");
+        warnBanner.classList.remove("visible");
+      } else {
+        breachBanner.classList.remove("visible");
+      }
+    }
+
+    async function refresh() {
+      try {
+        const resp = await fetch(`/api/v1/tokens/balance/${encodeURIComponent(USER_ID)}`);
+        if (!resp.ok) return;
+        const data = await resp.json();
+        applyData(data);
+      } catch (_) { /* network hiccup — keep polling */ }
+    }
+
+    // Initial render from server-side data, then start polling
+    setInterval(refresh, POLL_INTERVAL_MS);
+  </script>
+</body>
+</html>
+

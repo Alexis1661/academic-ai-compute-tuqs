@@ -1,0 +1,16 @@
+{
+  "name": "tuqs-e2e-tests",
+  "version": "1.0.0",
+  "description": "Playwright E2E tests for Token Usage & Quota Service (Story 8.6)",
+  "private": true,
+  "scripts": {
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "typescript": "^5.4.0"
+  }
+}
+

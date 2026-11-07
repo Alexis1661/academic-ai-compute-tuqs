@@ -20,3 +20,7 @@ class FakeClock(IClock):
 
     def advance(self, **delta) -> None:
         self._now += timedelta(**delta)
+
+    def today_str(self) -> str:
+        """Return the current fake date as YYYY-MM-DD (UTC), matching period_key()."""
+        return self._now.date().isoformat()

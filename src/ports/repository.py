@@ -21,5 +21,32 @@ class IQuotaRepository(ABC):
         """
 
     @abstractmethod
+    def reserve_tokens(
+        self, user_id: str, date: str, requested_tokens: int, default_limit: int
+    ) -> UserQuota:
+        """
+        Story 8.4 / AD-19: atomically reserve `requested_tokens` from the daily bucket.
+
+        Uses a database-level conditional update (no read-modify-write in Python) so that
+        two simultaneous requests against a near-empty bucket cannot both succeed.
+
+        Returns the updated UserQuota on success.
+        Raises QuotaExceededError when tokens_used + requested > token_limit.
+        Raises StorageUnavailableError on infrastructure failure.
+        """
+
+    @abstractmethod
+    def bulk_reset_daily_quotas(self, period: str) -> int:
+        """
+        Story 8.5: reset tokens_used to 0 for every row whose date equals `period`.
+
+        Implemented as a single chunked bulk UPDATE — no row-level locks held beyond
+        the statement boundary so concurrent reads remain unblocked.
+
+        Returns the number of rows reset.
+        Raises StorageUnavailableError on infrastructure failure.
+        """
+
+    @abstractmethod
     def ping(self) -> bool:
         """Return True when the store answers a trivial query."""

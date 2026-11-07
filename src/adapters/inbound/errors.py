@@ -16,7 +16,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from src.adapters.inbound.schemas import ErrorBody
 from src.composition import get_clock
-from src.domain.exceptions import DomainError, InvalidTokenCountError, StorageUnavailableError
+from src.domain.exceptions import DomainError, InvalidTokenCountError, QuotaExceededError, StorageUnavailableError
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +27,7 @@ _CORRELATION_ID_RE = re.compile(r"[A-Za-z0-9._-]{1,128}")
 _DOMAIN_STATUS = {
     InvalidTokenCountError: status.HTTP_400_BAD_REQUEST,
     StorageUnavailableError: status.HTTP_503_SERVICE_UNAVAILABLE,
+    # QuotaExceededError is handled inline in the router (needs a structured 429 body)
 }
 
 _HTTP_CODES = {

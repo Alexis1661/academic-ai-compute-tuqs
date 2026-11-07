@@ -95,3 +95,52 @@ class ErrorBody(BaseModel):
     correlation_id: str
     timestamp: datetime
     details: Optional[Dict[str, Any]] = None
+
+
+# ---------------------------------------------------------------------------
+# Story 8.4 — Atomic Quota Reservation (POST /api/v1/quota/reserve)
+# ---------------------------------------------------------------------------
+
+class ReserveRequest(BaseModel):
+    """Request body for the atomic token reservation endpoint."""
+    user_id: str = Field(..., min_length=1, max_length=64, pattern=ID_PATTERN, examples=["sam_student"])
+    requested_tokens: int = Field(..., gt=0, strict=True, examples=[400])
+
+
+class ReserveResponse(BaseModel):
+    """Successful reservation: tokens have been atomically decremented from the bucket."""
+    user_id: str
+    reserved_tokens: int = Field(..., description="Number of tokens successfully reserved")
+    remaining_tokens: int = Field(..., description="Tokens still available after this reservation")
+    tokens_used: int = Field(..., description="Total tokens used today after this reservation")
+    token_limit: int = Field(..., description="Daily quota ceiling")
+    date: str = Field(..., description="UTC date of the quota period (YYYY-MM-DD)")
+
+
+class ReserveRejectedResponse(BaseModel):
+    """
+    HTTP 429 body returned when the reservation is rejected due to insufficient balance
+    (AD-19: zero overdrafts permitted).
+    """
+    remaining_tokens: int = Field(..., description="Tokens available at the moment of rejection")
+    requested_tokens: int = Field(..., description="Tokens that were requested but could not be reserved")
+    error_code: str = Field(default="ERR_QUOTA_EXCEEDED")
+    message: str = Field(default="Daily Quota Exceeded: insufficient balance for this reservation")
+
+
+# ---------------------------------------------------------------------------
+# Story 8.5 — Midnight Reset Daemon (POST /api/v1/quota/cron/midnight-reset)
+# ---------------------------------------------------------------------------
+
+class MidnightResetResponse(BaseModel):
+    """Result of the bulk midnight quota reset job."""
+    buckets_reset: int = Field(..., description="Number of quota rows reset to 0")
+    period: str = Field(..., description="UTC date period that was reset (YYYY-MM-DD)")
+    message: str = Field(..., description="Human-readable confirmation")
+
+
+class SeedBucketsRequest(BaseModel):
+    """Dev/test helper: seed N quota buckets with usage > 80% for NFR benchmark."""
+    count: int = Field(..., gt=0, le=5000, description="Number of buckets to seed")
+    token_limit: int = Field(default=100000, gt=0)
+    usage_percent: float = Field(default=0.85, gt=0, le=1.0)

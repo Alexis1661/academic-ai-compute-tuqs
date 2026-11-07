@@ -50,6 +50,20 @@ class AllowanceResult:
     warning: QuotaWarningInfo
 
 
+@dataclass(frozen=True)
+class ReservationResult:
+    """Story 8.4: result of a successful atomic token reservation."""
+    quota: UserQuota
+    reserved_tokens: int
+
+
+@dataclass(frozen=True)
+class MidnightResetResult:
+    """Story 8.5: result of the bulk midnight quota reset job."""
+    buckets_reset: int
+    period: str
+
+
 class _QuotaUseCase:
     """Each execute() reads the clock once; timestamp, period key and reset derive from it (AD-5)."""
 
@@ -129,3 +143,48 @@ class CheckAllowance(_QuotaUseCase):
                 decision.reason_code,
             )
         return AllowanceResult(decision, self.domain.evaluate_soft_warning(quota))
+
+
+class ReserveTokens(_QuotaUseCase):
+    """
+    Story 8.4: atomic reservation that enforces the overdraft guard at the database level.
+
+    Delegates to IQuotaRepository.reserve_tokens() which issues a conditional UPDATE
+    (WHERE tokens_used + :n <= token_limit) so two racing requests cannot both succeed.
+    QuotaExceededError is propagated to the HTTP adapter which maps it to HTTP 429.
+    """
+
+    def execute(self, user_id: str, requested_tokens: int) -> ReservationResult:
+        now = self.clock.now()
+        date = period_key(now)
+        # reserve_tokens raises QuotaExceededError on insufficient balance (HTTP adapter catches it)
+        quota = self.repository.reserve_tokens(
+            user_id=user_id,
+            date=date,
+            requested_tokens=requested_tokens,
+            default_limit=self.default_limit,
+        )
+        logger.info(
+            "token_reservation_approved user=%s requested=%d used=%d limit=%d",
+            user_id, requested_tokens, quota.tokens_used, quota.token_limit,
+        )
+        return ReservationResult(quota=quota, reserved_tokens=requested_tokens)
+
+
+class MidnightResetJob(_QuotaUseCase):
+    """
+    Story 8.5: bulk midnight reset daemon.
+
+    Resets all tokens_used counters for the current day's period to 0 using chunked
+    bulk UPDATEs, minimising lock contention so concurrent reads remain unblocked.
+    """
+
+    def execute(self) -> MidnightResetResult:
+        now = self.clock.now()
+        period = period_key(now)
+        buckets_reset = self.repository.bulk_reset_daily_quotas(period)
+        logger.info(
+            "midnight_reset_complete period=%s buckets_reset=%d",
+            period, buckets_reset,
+        )
+        return MidnightResetResult(buckets_reset=buckets_reset, period=period)

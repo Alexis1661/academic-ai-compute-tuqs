@@ -135,6 +135,71 @@ stories:
       zero_skipped_tests: true
       documentation_updated: true
 
+  - id: "STORY-8.4"
+    name: "Atomic Concurrency Bucket Drain Race Condition Defense"
+    mandated_flow: "Flow A: ATDD-First (bmad-testarch-atdd)"
+    status: "done"
+    history:
+      - { date: "2026-11-07", status: "ready-for-dev" }
+      - { date: "2026-11-07", status: "in-progress", note: "Red Phase scaffolded with threading.Barrier" }
+      - { date: "2026-11-07", status: "done", note: "Conditional atomic in-DB decrement implemented" }
+    endpoints:
+      - "POST /api/v1/quota/reserve"
+    tables_affected:
+      - "user_quotas (atomic conditional UPDATE)"
+    definition_of_done:
+      code_implemented: true
+      invariants_upheld:
+        - "AD-19: Quota reservation and balance checking strictly atomic (zero overdrafts under concurrent requests)"
+        - "HTTP 429 with remaining_tokens and requested_tokens on rejected request"
+      test_files:
+        - "tests/integration/test_story_8_4_atomic_reservation.py"
+
+  - id: "STORY-8.5"
+    name: "Midnight Automatic Quota Reset Daemon with High-Throughput Batch Processing"
+    mandated_flow: "Flow D: Quality Gate (Performance & NFR)"
+    status: "done"
+    history:
+      - { date: "2026-11-07", status: "ready-for-dev" }
+      - { date: "2026-11-07", status: "in-progress" }
+      - { date: "2026-11-07", status: "done", note: "Chunked bulk UPDATE and k6 benchmark scaffolded" }
+    endpoints:
+      - "POST /api/v1/quota/cron/midnight-reset"
+      - "POST /api/v1/quota/cron/seed-test-buckets"
+    tables_affected:
+      - "user_quotas (chunked bulk UPDATE)"
+    definition_of_done:
+      code_implemented: true
+      invariants_upheld:
+        - "Batch reset completes in < 2.0s for 2,000 buckets"
+        - "Concurrent token query reads experience zero lock timeouts"
+      test_files:
+        - "tests/unit/test_story_8_5_midnight_reset.py"
+        - "tests/nfr/quota-batch-reset.js"
+
+  - id: "STORY-8.6"
+    name: "Real-Time Usage Ledger & Quota Breach Alert Banner E2E"
+    mandated_flow: "Flow E: Playwright E2E with Page Object Model"
+    status: "done"
+    history:
+      - { date: "2026-11-07", status: "ready-for-dev" }
+      - { date: "2026-11-07", status: "in-progress" }
+      - { date: "2026-11-07", status: "done", note: "Web dashboard and Playwright POM created" }
+    endpoints:
+      - "GET /student/quota"
+    tables_affected:
+      - "user_quotas (read)"
+    definition_of_done:
+      code_implemented: true
+      invariants_upheld:
+        - "UsageDashboardPage models meter bar, counters, and warning banner"
+        - "Dynamic color transitions: Green (<80%) -> Amber (>=80%) -> Red (100%)"
+        - "Urgent banner visible at 100%: 'Daily Quota Depleted: Model Access Paused Until Midnight'"
+      test_files:
+        - "src/frontend/templates/quota_dashboard.html"
+        - "tests/e2e/pages/UsageDashboardPage.ts"
+        - "tests/e2e/quota-breach-alert.spec.ts"
+
 deferred_to_impl2:
   - "Solu-2 reserveTokens / commitUsage / releaseExpiredReservations (docs/contracts/solu2/)"
   - "AD-2 idempotency keys on writes"

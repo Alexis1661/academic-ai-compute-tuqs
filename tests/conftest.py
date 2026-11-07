@@ -49,7 +49,11 @@ def db_session():
 def client(db_session, fake_clock):
     """FastAPI test client wired to the in-memory database and the fake clock."""
     def override_get_db():
-        yield db_session
+        session = TestingSessionLocal()
+        try:
+            yield session
+        finally:
+            session.close()
 
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_clock] = lambda: fake_clock

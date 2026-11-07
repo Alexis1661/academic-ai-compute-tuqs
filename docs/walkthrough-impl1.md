@@ -199,3 +199,26 @@ TOTAL    582 stmts   24 miss   42 branches   10 partial   95%
 | `requested_tokens` above 1,000,000 returned 422 | Upper bound removed; counters widened to BIGINT; oversize requests are explained denials |
 
 The 11 patches (single clock read, BIGINT migration, fail-closed reads, strict integer token counts, id validation, correlation-id sanitising, error subclass mapping, handler clock fallback, settings validation, `%` in the database URL, dead-code removal) are in commits `84c640d`…`ddcb5b7`, each covered by a new test.
+
+---
+
+## 8. Increment: Stories 8.4, 8.5, and 8.6 Implementation
+
+### Story 8.4: Atomic Concurrency Bucket Drain Race Condition Defense (Flow A: ATDD-First)
+* **Invariant AD-19**: Quota reservation and balance checking are strictly atomic at the database layer (zero overdrafts).
+* **Endpoint**: `POST /api/v1/quota/reserve`.
+* **ATDD Test**: `tests/integration/test_story_8_4_atomic_reservation.py` scaffolds simultaneous multi-threaded reservation attempts with `threading.Barrier`.
+* **Outcome**: One request receives HTTP 200 with tokens reserved; the concurrent request receives HTTP 429 Quota Exceeded with `{ "remaining_tokens": 100, "requested_tokens": 400 }`. Balance never goes below zero.
+
+### Story 8.5: Midnight Automatic Quota Reset Daemon (Flow D: Quality Gate NFR)
+* **Endpoint**: `POST /api/v1/quota/cron/midnight-reset` (plus `/api/v1/quota/cron/seed-test-buckets` for NFR benchmarking).
+* **High-Throughput Strategy**: Chunked bulk SQL updates (`LIMIT 500`) to hold table locks for microseconds, eliminating lock contention for concurrent reads.
+* **NFR Quality Gate**:
+  * Unit test: `tests/unit/test_story_8_5_midnight_reset.py`.
+  * k6 load benchmark: `tests/nfr/quota-batch-reset.js` verifying < 2.0s execution for 2,000 buckets under 50 concurrent readers.
+
+### Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner (Flow E: Playwright E2E)
+* **Web View**: `GET /student/quota?user_id=sam` served via FastAPI with Jinja2 (`src/frontend/templates/quota_dashboard.html`).
+* **Visual States**: Dynamic meter bar transitioning Green (< 80%) → Amber (80%–99%) → Red (100%).
+* **Breach Alert Banner**: Displays `"Daily Quota Depleted: Model Access Paused Until Midnight"` when 100% quota is breached.
+* **Playwright POM**: `tests/e2e/pages/UsageDashboardPage.ts` and automated E2E specs in `tests/e2e/quota-breach-alert.spec.ts`.

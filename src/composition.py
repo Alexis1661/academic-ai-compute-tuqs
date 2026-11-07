@@ -10,7 +10,13 @@ from src.adapters.outbound.db import get_db
 from src.adapters.outbound.fleet_adapter import JsonFleetAdapter
 from src.adapters.outbound.sql_repository import SQLQuotaRepository
 from src.adapters.outbound.system_clock import SystemClock
-from src.application.use_cases import CheckAllowance, GetQuotaBalance, IngestTokenEvent
+from src.application.use_cases import (
+    CheckAllowance,
+    GetQuotaBalance,
+    IngestTokenEvent,
+    MidnightResetJob,
+    ReserveTokens,
+)
 from src.config import settings
 from src.domain.services import QuotaDomainService
 from src.ports.clock import IClock
@@ -60,3 +66,22 @@ def get_check_allowance(
     domain: QuotaDomainService = Depends(get_domain_service),
 ) -> CheckAllowance:
     return CheckAllowance(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
+
+
+def get_reserve_tokens(
+    repository: IQuotaRepository = Depends(get_repository),
+    clock: IClock = Depends(get_clock),
+    domain: QuotaDomainService = Depends(get_domain_service),
+) -> ReserveTokens:
+    """Story 8.4: atomic reservation use case dependency."""
+    return ReserveTokens(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
+
+
+def get_midnight_reset(
+    repository: IQuotaRepository = Depends(get_repository),
+    clock: IClock = Depends(get_clock),
+    domain: QuotaDomainService = Depends(get_domain_service),
+) -> MidnightResetJob:
+    """Story 8.5: midnight reset daemon dependency."""
+    return MidnightResetJob(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
+

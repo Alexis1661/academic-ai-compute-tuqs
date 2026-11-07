@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from src.adapters.inbound.errors import register_exception_handlers
-from src.adapters.inbound.router import router
+from src.adapters.inbound.router import router, web_router
 from src.adapters.inbound.schemas import RootResponse
 from src.adapters.outbound.migrations import run_migrations
 from src.config import settings
@@ -35,6 +35,7 @@ app = FastAPI(
 )
 
 app.include_router(router)
+app.include_router(web_router)
 register_exception_handlers(app)
 
 
