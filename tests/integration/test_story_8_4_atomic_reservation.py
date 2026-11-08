@@ -1,5 +1,8 @@
 """
-Story 8.4 — ATDD Red Phase (Flow A: ATDD-First).
+Story 8.4 — reservation acceptance and concurrent transaction tests.
+
+The historical red-phase console output is unavailable; this current green test
+is not evidence that a test was executed before implementation.
 
 Invariant AD-19: Quota reservation and balance checking must be strictly atomic.
 Zero overdrafts permitted under concurrent requests.
@@ -12,11 +15,18 @@ BDD Acceptance Scenario:
   And the database balance remains at exactly 100 tokens (never negative)
 """
 import threading
+from concurrent.futures import ThreadPoolExecutor
+
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import sessionmaker
 
 import pytest
 from sqlalchemy import select
 
-from src.adapters.outbound.db import UserQuotaDB
+from src.adapters.outbound.db import UserQuotaDB, build_engine, get_db
+from src.adapters.outbound.migrations import run_migrations
+from src.composition import get_clock
+from src.main import app
 
 
 @pytest.fixture
@@ -33,63 +43,60 @@ def seed_sam_student_500(db_session, fake_clock):
     return record
 
 
-def _post_reserve(client, user_id: str, tokens: int, results: list, index: int) -> None:
-    """Thread target: POST to /api/v1/quota/reserve and store (status_code, json)."""
-    resp = client.post(
-        "/api/v1/quota/reserve",
-        json={"user_id": user_id, "requested_tokens": tokens},
-    )
-    results[index] = (resp.status_code, resp.json())
+def test_bdd_scenario_atomic_adjudication_prevents_overdraft(tmp_path, fake_clock):
+    """Race real independent SQLite connections against a migrated file database.
 
-
-def test_bdd_scenario_atomic_adjudication_prevents_overdraft(
-    client, seed_sam_student_500, db_session, fake_clock
-):
+    Each HTTP dependency checks out its connection before a two-party barrier. This
+    proves that the requests use distinct live DBAPI connections, unlike StaticPool.
+    Repeating the exact 500/400/400 BDD case exercises the write race 20 times.
+    SQLite serializes writes; this test does not claim PostgreSQL row-lock behavior.
     """
-    BDD: Atomic adjudication prevents quota overdraft.
+    url = f"sqlite:///{(tmp_path / 'reservation-race.db').as_posix()}"
+    run_migrations(url)
+    engine = build_engine(url)
+    sessions = sessionmaker(bind=engine)
+    barrier = threading.Barrier(2, timeout=10)
+    connection_ids = []
+    connection_lock = threading.Lock()
 
-    Two simultaneous 400-token requests against a 500-token bucket must result in
-    exactly one approval (HTTP 200) and one rejection (HTTP 429), leaving the balance
-    at exactly 100 tokens — never negative.
-    """
-    results = [None, None]
-    barrier = threading.Barrier(2)
+    def override_get_db():
+        with sessions() as session:
+            # Keep both physical connections checked out concurrently before either
+            # request can execute its transaction.
+            raw = session.connection().connection.driver_connection
+            with connection_lock:
+                connection_ids.append(id(raw))
+            barrier.wait()
+            yield session
 
-    def request_with_barrier(index: int) -> None:
-        barrier.wait()  # synchronize both threads to fire simultaneously
-        _post_reserve(client, "sam_student", 400, results, index)
-
-    threads = [
-        threading.Thread(target=request_with_barrier, args=(i,))
-        for i in range(2)
-    ]
-    for t in threads:
-        t.start()
-    for t in threads:
-        t.join()
-
-    status_codes = {results[0][0], results[1][0]}
-    assert 200 in status_codes, f"Expected one HTTP 200; got {status_codes}"
-    assert 429 in status_codes, f"Expected one HTTP 429; got {status_codes}"
-
-    # Verify the rejected response body
-    rejected = next(body for code, body in results if code == 429)
-    assert rejected["remaining_tokens"] == 100
-    assert rejected["requested_tokens"] == 400
-
-    # Verify the approved response body
-    approved = next(body for code, body in results if code == 200)
-    assert approved["reserved_tokens"] == 400
-    assert approved["remaining_tokens"] == 100
-
-    # Database invariant: balance must be exactly 100, never negative
-    tokens_used = db_session.execute(
-        select(UserQuotaDB.tokens_used).where(UserQuotaDB.user_id == "sam_student")
-    ).scalar_one()
-    assert tokens_used == 900, (
-        f"Expected tokens_used=900 (500 initial + 400 reserved), got {tokens_used}. "
-        "Overdraft guard failed."
-    )
+    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_clock] = lambda: fake_clock
+    try:
+        with TestClient(app) as client, ThreadPoolExecutor(max_workers=2) as pool:
+            for i in range(20):
+                user = f"sam_student_{i}"
+                with sessions.begin() as session:
+                    session.add(UserQuotaDB(user_id=user, date=fake_clock.today_str(),
+                                            tokens_used=500, token_limit=1000))
+                first = pool.submit(client.post, "/api/v1/quota/reserve",
+                                    json={"user_id": user, "requested_tokens": 400})
+                second = pool.submit(client.post, "/api/v1/quota/reserve",
+                                     json={"user_id": user, "requested_tokens": 400})
+                responses = [first.result(timeout=20), second.result(timeout=20)]
+                assert sorted(response.status_code for response in responses) == [200, 429]
+                rejected = next(r.json() for r in responses if r.status_code == 429)
+                approved = next(r.json() for r in responses if r.status_code == 200)
+                assert (rejected["remaining_tokens"], rejected["requested_tokens"]) == (100, 400)
+                assert (approved["remaining_tokens"], approved["reserved_tokens"]) == (100, 400)
+                with sessions() as session:
+                    used = session.execute(select(UserQuotaDB.tokens_used).where(
+                        UserQuotaDB.user_id == user)).scalar_one()
+                assert used == 900
+        assert len(connection_ids) == 40
+        assert all(connection_ids[i] != connection_ids[i + 1] for i in range(0, 40, 2))
+    finally:
+        app.dependency_overrides.clear()
+        engine.dispose()
 
 
 def test_reservation_decrements_balance_by_exact_amount(client, seed_sam_student_500, db_session, fake_clock):

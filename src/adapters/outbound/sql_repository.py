@@ -1,4 +1,4 @@
-from sqlalchemy import select, text, update
+from sqlalchemy import and_, func, literal, select, text, update
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm import Session
 
@@ -6,11 +6,6 @@ from src.adapters.outbound.db import TokenLedgerDB, UserQuotaDB
 from src.domain.exceptions import QuotaExceededError, StorageUnavailableError
 from src.domain.models import TokenLedgerEntry, UserQuota
 from src.ports.repository import IQuotaRepository
-
-# Chunk size for Story 8.5 bulk reset: keeps each UPDATE statement small enough
-# to avoid long-held table locks while still being efficient.
-_RESET_CHUNK_SIZE = 500
-
 
 def _dialect_insert(dialect_name: str):
     if dialect_name == "postgresql":
@@ -172,44 +167,34 @@ class SQLQuotaRepository(IQuotaRepository):
             raise
 
     def bulk_reset_daily_quotas(self, period: str) -> int:
-        """
-        Story 8.5: chunked bulk UPDATE reset for high-throughput midnight processing.
+        """Create each prior user's current bucket without overwriting usage or history.
 
-        Updates are issued in batches of _RESET_CHUNK_SIZE rows so the write lock
-        is held for microseconds per chunk, leaving concurrent read queries unblocked.
-
-        Returns the total number of rows reset.
+        The unique user/date key and ON CONFLICT protect concurrent ingestion and
+        retries. A single transaction prevents partial resets on failure.
         """
         quotas = UserQuotaDB.__table__
-        total_reset = 0
         try:
-            while True:
-                # Fetch a batch of primary-key IDs to reset
-                ids = self.session.execute(
-                    select(quotas.c.id)
-                    .where(quotas.c.date == period, quotas.c.tokens_used > 0)
-                    .limit(_RESET_CHUNK_SIZE)
-                ).scalars().all()
-
-                if not ids:
-                    break
-
-                self.session.execute(
-                    update(quotas)
-                    .where(quotas.c.id.in_(ids))
-                    .values(tokens_used=0)
-                )
-                self.session.commit()
-                total_reset += len(ids)
-
+            latest = (select(quotas.c.user_id, func.max(quotas.c.date).label("date"))
+                      .where(quotas.c.date < period)
+                      .group_by(quotas.c.user_id).subquery())
+            source = (select(quotas.c.user_id, literal(period), literal(0), quotas.c.token_limit)
+                      .join(latest, and_(quotas.c.user_id == latest.c.user_id,
+                                         quotas.c.date == latest.c.date))
+                      .where(quotas.c.date < period))
+            insert = _dialect_insert(self.session.get_bind().dialect.name)
+            stmt = (insert(quotas).from_select(
+                ["user_id", "date", "tokens_used", "token_limit"], source)
+                .on_conflict_do_nothing(index_elements=["user_id", "date"])
+                .returning(quotas.c.id))
+            count = len(self.session.execute(stmt).all())
+            self.session.commit()
+            return count
         except OperationalError as exc:
             self.session.rollback()
             raise StorageUnavailableError() from exc
         except Exception:
             self.session.rollback()
             raise
-
-        return total_reset
 
     def ping(self) -> bool:
         try:

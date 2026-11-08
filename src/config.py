@@ -1,6 +1,6 @@
 import logging
 
-from pydantic import Field, field_validator
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -18,6 +18,10 @@ class Settings(BaseSettings):
 
     DEFAULT_DAILY_TOKEN_LIMIT: int = Field(100000, gt=0)
     SOFT_WARNING_THRESHOLD: float = Field(0.80, gt=0, le=1)
+
+    # Administrative endpoints fail closed until an operator configures a secret.
+    ADMIN_TOKEN: SecretStr | None = None
+    ENABLE_TEST_SEED: bool = False
 
     FLEET_FIXTURE_PATH: str = "tests/fixtures/fleet_nodes.json"
 

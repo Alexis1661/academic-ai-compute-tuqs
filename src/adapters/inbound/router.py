@@ -3,8 +3,10 @@ Inbound HTTP adapter. Thin by design: translate DTOs <-> use-case commands/resul
 set quota headers. No persistence or business rules live here.
 """
 from pathlib import Path as FilePath
+from datetime import timedelta
+import hmac
 
-from fastapi import APIRouter, Depends, Path, Request, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Path, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.templating import Jinja2Templates
 
@@ -49,6 +51,20 @@ from src.domain.models import QuotaWarningInfo, period_key
 from src.ports.clock import IClock
 from src.ports.fleet import IFleetProvider
 from src.ports.repository import IQuotaRepository
+
+def require_admin(x_admin_token: str | None = Header(default=None)) -> None:
+    """Administrative actions are unavailable until a secret is configured."""
+    secret = settings.ADMIN_TOKEN
+    if secret is None or not secret.get_secret_value() or x_admin_token is None:
+        raise HTTPException(status_code=403, detail="Administrative access denied")
+    if not hmac.compare_digest(secret.get_secret_value().encode("utf-8"), x_admin_token.encode("utf-8")):
+        raise HTTPException(status_code=403, detail="Administrative access denied")
+
+
+def require_test_seed(_: None = Depends(require_admin)) -> None:
+    if not settings.ENABLE_TEST_SEED or settings.APP_ENV.lower() not in {"test", "development"}:
+        raise HTTPException(status_code=404, detail="Not Found")
+
 
 # Jinja2 templates for the Story 8.6 student web view
 _TEMPLATES_DIR = FilePath(__file__).resolve().parents[3] / "src" / "frontend" / "templates"
@@ -242,12 +258,10 @@ def reserve_quota_tokens(
 )
 def trigger_midnight_reset(
     use_case: MidnightResetJob = Depends(get_midnight_reset),
+    _: None = Depends(require_admin),
 ):
     """
-    Story 8.5: bulk reset tokens_used to 0 for every quota bucket in today's period.
-
-    Executed in chunks to avoid table-level lock contention so concurrent read queries
-    remain unblocked during the reset sweep.
+    Create current-period buckets with zero usage, preserving prior periods and existing current usage.
     """
     result = use_case.execute()
     return MidnightResetResponse(
@@ -255,7 +269,7 @@ def trigger_midnight_reset(
         period=result.period,
         message=(
             f"Midnight reset complete: {result.buckets_reset} quota buckets "
-            f"reset to 0 for period {result.period}."
+            f"created for period {result.period}."
         ),
     )
 
@@ -271,6 +285,7 @@ def seed_test_buckets(
     payload: SeedBucketsRequest,
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
+    _: None = Depends(require_test_seed),
 ):
     """
     Story 8.5 NFR helper: populates `count` user quota rows with usage_percent consumption
@@ -278,37 +293,28 @@ def seed_test_buckets(
     Only intended for dev/test environments.
     """
     from src.adapters.outbound.db import UserQuotaDB
-    from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+    from src.adapters.outbound.sql_repository import _dialect_insert
 
     session = repository.session  # type: ignore[attr-defined]
-    today = period_key(clock.now())
+    previous = period_key(clock.now() - timedelta(days=1))
     tokens_used = int(payload.token_limit * payload.usage_percent)
-
+    rows = [dict(user_id=f"bench_user_{i:04d}", date=previous,
+                 tokens_used=tokens_used, token_limit=payload.token_limit)
+            for i in range(payload.count)]
     seeded = 0
-    for i in range(payload.count):
-        user_id = f"bench_user_{i:04d}"
-        try:
-            dialect = session.get_bind().dialect.name
-            if dialect == "postgresql":
-                from sqlalchemy.dialects.postgresql import insert as pg_insert
-                ins = pg_insert(UserQuotaDB.__table__)
-            else:
-                ins = sqlite_insert(UserQuotaDB.__table__)
+    try:
+        insert = _dialect_insert(session.get_bind().dialect.name)
+        for start in range(0, len(rows), 200):
+            stmt = (insert(UserQuotaDB.__table__).values(rows[start:start + 200])
+                    .on_conflict_do_nothing(index_elements=["user_id", "date"])
+                    .returning(UserQuotaDB.id))
+            seeded += len(session.execute(stmt).all())
+        session.commit()
+    except Exception:
+        session.rollback()
+        raise
+    return {"seeded": seeded, "period": previous, "tokens_used": tokens_used}
 
-            session.execute(
-                ins.values(
-                    user_id=user_id,
-                    date=today,
-                    tokens_used=tokens_used,
-                    token_limit=payload.token_limit,
-                ).on_conflict_do_nothing(index_elements=["user_id", "date"])
-            )
-            seeded += 1
-        except Exception:
-            session.rollback()
-            raise
-    session.commit()
-    return {"seeded": seeded, "period": today, "tokens_used": tokens_used}
 
 
 # ---------------------------------------------------------------------------

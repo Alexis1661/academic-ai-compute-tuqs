@@ -159,15 +159,15 @@
       <div class="counters">
         <div class="counter-item">
           <span class="counter-label">Tokens Used</span>
-          <span class="counter-value" id="tokens-used-value">{{ tokens_used }}</span>
+          <span class="counter-value" id="tokens-used-value">{{ "{:,}".format(tokens_used) }}</span>
         </div>
         <div class="counter-item">
           <span class="counter-label">Daily Limit</span>
-          <span class="counter-value" id="token-limit-value">{{ token_limit }}</span>
+          <span class="counter-value" id="token-limit-value">{{ "{:,}".format(token_limit) }}</span>
         </div>
         <div class="counter-item">
           <span class="counter-label">Remaining</span>
-          <span class="counter-value" id="tokens-remaining-value">{{ remaining_balance }}</span>
+          <span class="counter-value" id="tokens-remaining-value">{{ "{:,}".format(remaining_balance) }}</span>
         </div>
       </div>
 
@@ -210,7 +210,7 @@
     }
 
     function formatNumber(n) {
-      return Number(n).toLocaleString();
+      return Number(n).toLocaleString("en-US");
     }
 
     function applyData(data) {
@@ -273,6 +273,7 @@
     }
 
     // Initial render from server-side data, then start polling
+    refresh();
     setInterval(refresh, POLL_INTERVAL_MS);
   </script>
 </body>

@@ -190,3 +190,25 @@ TOTAL coverage of src/ (lines + branches): 95%
 ```
 
 Full output: [`docs/test-evidence-impl1.txt`](docs/test-evidence-impl1.txt). Known limitations are listed in the [walkthrough](docs/walkthrough-impl1.md#6-known-limitations).
+
+
+### Quota rollover administration
+
+Configure a strong random `ADMIN_TOKEN` in the server environment and send it via
+`X-Admin-Token` to `POST /api/v1/quota/cron/midnight-reset`. The endpoint denies
+requests if the secret is unset or incorrect. Protect this secret with TLS and
+network controls; it is a shared service credential, not an individual user identity
+or a role-based authorization system. Configure a scheduler to call the endpoint at
+00:00 UTC; this application does not itself schedule the call. Rollover inserts a
+zero-usage bucket for the current UTC period from the latest previous limit, preserving
+the previous counters and ledger and never clearing current-period consumption.
+
+For isolated benchmarks only, additionally set `APP_ENV=development` or `test` and
+`ENABLE_TEST_SEED=true`. The seed endpoint requires the same administrative header
+and is unavailable in production even when the flag is enabled. Use a disposable
+database; seeded users are named `bench_user_...`.
+
+
+### Impl-2 verification
+
+Install Python development dependencies and run `python -m pytest`. For the self-hosted browser suite, run `npm ci`, `npx playwright install chromium`, and `npx playwright test` from `tests/e2e`. Port 8000 must be free; the test starts its own server and uses an isolated `playwright-e2e.db` in the project root. Set `BASE_URL` only to test an existing isolated service. See `docs/walkthrough-impl2.md` for results and `docs/evidence/k6-conditions.md` for the load-test procedure and its failed p95 gate.

@@ -37,14 +37,9 @@ class IQuotaRepository(ABC):
 
     @abstractmethod
     def bulk_reset_daily_quotas(self, period: str) -> int:
-        """
-        Story 8.5: reset tokens_used to 0 for every row whose date equals `period`.
+        """Create missing current-period rows from prior limits, preserving history.
 
-        Implemented as a single chunked bulk UPDATE — no row-level locks held beyond
-        the statement boundary so concurrent reads remain unblocked.
-
-        Returns the number of rows reset.
-        Raises StorageUnavailableError on infrastructure failure.
+        Existing current-period usage must not be erased; return rows created.
         """
 
     @abstractmethod

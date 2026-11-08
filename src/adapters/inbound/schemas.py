@@ -134,8 +134,8 @@ class ReserveRejectedResponse(BaseModel):
 
 class MidnightResetResponse(BaseModel):
     """Result of the bulk midnight quota reset job."""
-    buckets_reset: int = Field(..., description="Number of quota rows reset to 0")
-    period: str = Field(..., description="UTC date period that was reset (YYYY-MM-DD)")
+    buckets_reset: int = Field(..., description="Number of missing current-period quota rows created at zero")
+    period: str = Field(..., description="UTC date period created (YYYY-MM-DD)")
     message: str = Field(..., description="Human-readable confirmation")
 
 

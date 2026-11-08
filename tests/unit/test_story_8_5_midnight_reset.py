@@ -1,155 +1,114 @@
-"""
-Story 8.5 — Unit tests for the Midnight Automatic Quota Reset Daemon.
-
-Flow D: Quality Gate (Performance & NFR)
-
-BDD Acceptance Scenario:
-  Given 2,000 student quota buckets seeded with arbitrary usage > 80%
-  When the midnight reset cron job triggers
-  Then all 2,000 daily buckets reset tokens_used to 0
-  And total batch execution time is strictly less than 2.0 seconds
-  And concurrent token query reads experience zero lock timeouts
-"""
-import time
+"""Midnight rollover preserves ledger-period consistency and fails closed."""
+from datetime import timedelta
 
 import pytest
+from pydantic import SecretStr
 from sqlalchemy import select
 
 from src.adapters.outbound.db import UserQuotaDB
-from src.application.use_cases import MidnightResetJob
-from src.domain.services import QuotaDomainService
+from src.config import settings
 
 
-# ---------------------------------------------------------------------------
-# Helpers / fixtures
-# ---------------------------------------------------------------------------
+@pytest.fixture
+def admin(monkeypatch):
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", SecretStr("test-admin-secret"))
+    return {"X-Admin-Token": "test-admin-secret"}
 
-def _seed_many_buckets(db_session, fake_clock, count: int, usage_pct: float = 0.85):
-    """Bulk-insert `count` quota rows with usage_pct consumption."""
-    today = fake_clock.today_str()
-    token_limit = 100_000
-    tokens_used = int(token_limit * usage_pct)
-    rows = [
-        UserQuotaDB(
-            user_id=f"student_{i:06d}",
-            date=today,
-            tokens_used=tokens_used,
-            token_limit=token_limit,
-        )
-        for i in range(count)
-    ]
-    db_session.bulk_save_objects(rows)
+
+def seed(db_session, fake_clock, count=1, used=85000, days_ago=1):
+    day = (fake_clock.now() - timedelta(days=days_ago)).date().isoformat()
+    db_session.add_all([UserQuotaDB(user_id=f"student_{i}", date=day,
+                       tokens_used=used, token_limit=100000) for i in range(count)])
     db_session.commit()
-    return count
+    return day
 
 
-# ---------------------------------------------------------------------------
-# Functional correctness tests
-# ---------------------------------------------------------------------------
-
-def test_midnight_reset_resets_all_buckets_to_zero(db_session, fake_clock, client):
-    """All tokens_used values must be 0 after the reset endpoint is called."""
-    n = _seed_many_buckets(db_session, fake_clock, count=50)
-
-    resp = client.post("/api/v1/quota/cron/midnight-reset")
-    assert resp.status_code == 200
-
-    body = resp.json()
-    assert body["buckets_reset"] == n
-    assert body["period"] == fake_clock.today_str()
-    assert "reset" in body["message"].lower()
-
-    # Verify all rows are actually zero
-    all_used = db_session.execute(select(UserQuotaDB.tokens_used)).scalars().all()
-    assert all(used == 0 for used in all_used), "Some buckets were not reset to 0"
+def test_rollover_creates_new_rows_preserves_history(db_session, fake_clock, client, admin):
+    previous = seed(db_session, fake_clock, 50)
+    response = client.post("/api/v1/quota/cron/midnight-reset", headers=admin)
+    assert response.status_code == 200
+    assert response.json()["buckets_reset"] == 50
+    db_session.expire_all()
+    old = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.date == previous)).scalars().all()
+    current = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.date == fake_clock.today_str())).scalars().all()
+    assert len(old) == len(current) == 50
+    assert all(row.tokens_used == 85000 for row in old)
+    assert all(row.tokens_used == 0 and row.token_limit == 100000 for row in current)
 
 
-def test_midnight_reset_already_zero_buckets_not_counted(db_session, fake_clock, client):
-    """Buckets already at 0 are skipped; buckets_reset counts only those that changed."""
-    today = fake_clock.today_str()
-    # 10 buckets at 0 usage (already clean)
-    for i in range(10):
-        db_session.add(UserQuotaDB(user_id=f"clean_{i}", date=today, tokens_used=0, token_limit=100000))
-    # 5 buckets with real usage
-    for i in range(5):
-        db_session.add(UserQuotaDB(user_id=f"used_{i}", date=today, tokens_used=50000, token_limit=100000))
+def test_rollover_never_erases_current_usage_and_is_idempotent(db_session, fake_clock, client, admin):
+    seed(db_session, fake_clock)
+    db_session.add(UserQuotaDB(user_id="student_0", date=fake_clock.today_str(), tokens_used=123, token_limit=100000))
     db_session.commit()
+    for _ in range(2):
+        response = client.post("/api/v1/quota/cron/midnight-reset", headers=admin)
+        assert response.status_code == 200
+        assert response.json()["buckets_reset"] == 0
+    db_session.expire_all()
+    row = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.date == fake_clock.today_str())).scalar_one()
+    assert row.tokens_used == 123
 
-    resp = client.post("/api/v1/quota/cron/midnight-reset")
-    assert resp.status_code == 200
-    assert resp.json()["buckets_reset"] == 5
 
-
-def test_midnight_reset_only_affects_current_period(db_session, fake_clock, client):
-    """Reset must not touch rows from other dates (yesterday's audit trail)."""
-    today = fake_clock.today_str()
-    yesterday = "2026-10-24"
-
-    db_session.add(UserQuotaDB(user_id="u1", date=today, tokens_used=50000, token_limit=100000))
-    db_session.add(UserQuotaDB(user_id="u1", date=yesterday, tokens_used=99000, token_limit=100000))
+def test_rollover_uses_latest_previous_limit(db_session, fake_clock, client, admin):
+    seed(db_session, fake_clock, days_ago=2)
+    seed(db_session, fake_clock, days_ago=1)
+    yesterday = (fake_clock.now() - timedelta(days=1)).date().isoformat()
+    row = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.date == yesterday)).scalar_one()
+    row.token_limit = 200000
     db_session.commit()
-
-    resp = client.post("/api/v1/quota/cron/midnight-reset")
-    assert resp.status_code == 200
-    assert resp.json()["buckets_reset"] == 1
-
-    # Yesterday's row must remain untouched
-    yesterday_used = db_session.execute(
-        select(UserQuotaDB.tokens_used).where(
-            UserQuotaDB.user_id == "u1", UserQuotaDB.date == yesterday
-        )
-    ).scalar_one()
-    assert yesterday_used == 99000
+    assert client.post("/api/v1/quota/cron/midnight-reset", headers=admin).json()["buckets_reset"] == 1
+    current = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.date == fake_clock.today_str())).scalar_one()
+    assert current.token_limit == 200000
 
 
-def test_midnight_reset_empty_database_returns_zero(client, fake_clock):
-    """An empty database is a valid state; reset reports 0 buckets reset."""
-    resp = client.post("/api/v1/quota/cron/midnight-reset")
-    assert resp.status_code == 200
-    assert resp.json()["buckets_reset"] == 0
+def test_empty_rollover(client, admin):
+    assert client.post("/api/v1/quota/cron/midnight-reset", headers=admin).json()["buckets_reset"] == 0
 
 
-def test_midnight_reset_idempotent(db_session, fake_clock, client):
-    """Calling reset twice must be safe: second call resets 0 (already zero)."""
-    _seed_many_buckets(db_session, fake_clock, count=10)
+def test_administration_fails_closed(client, monkeypatch, admin):
+    reset = "/api/v1/quota/cron/midnight-reset"
+    seed_url = "/api/v1/quota/cron/seed-test-buckets"
+    payload = {"count": 2}
+    monkeypatch.setattr(settings, "ENABLE_TEST_SEED", True)
+    assert client.post(reset).status_code == 403
+    assert client.post(reset, headers={"X-Admin-Token": "wrong"}).status_code == 403
+    assert client.post(seed_url, json=payload).status_code == 403
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", None)
+    assert client.post(reset, headers=admin).status_code == 403
+    monkeypatch.setattr(settings, "ADMIN_TOKEN", SecretStr("test-admin-secret"))
+    monkeypatch.setattr(settings, "ENABLE_TEST_SEED", False)
+    assert client.post(seed_url, json=payload, headers=admin).status_code == 404
+    monkeypatch.setattr(settings, "ENABLE_TEST_SEED", True)
+    monkeypatch.setattr(settings, "APP_ENV", "production")
+    assert client.post(seed_url, json=payload, headers=admin).status_code == 404
 
-    resp1 = client.post("/api/v1/quota/cron/midnight-reset")
-    resp2 = client.post("/api/v1/quota/cron/midnight-reset")
 
-    assert resp1.json()["buckets_reset"] == 10
-    assert resp2.json()["buckets_reset"] == 0
+def test_seed_reports_actual_insertions_and_previous_period(client, fake_clock, monkeypatch, admin):
+    monkeypatch.setattr(settings, "ENABLE_TEST_SEED", True)
+    monkeypatch.setattr(settings, "APP_ENV", "test")
+    url = "/api/v1/quota/cron/seed-test-buckets"
+    first = client.post(url, json={"count": 2}, headers=admin)
+    second = client.post(url, json={"count": 2}, headers=admin)
+    assert first.status_code == second.status_code == 201
+    assert first.json()["seeded"] == 2
+    assert second.json()["seeded"] == 0
+    assert first.json()["period"] == (fake_clock.now() - timedelta(days=1)).date().isoformat()
+    assert client.post("/api/v1/quota/cron/midnight-reset", headers=admin).json()["buckets_reset"] == 2
 
 
-# ---------------------------------------------------------------------------
-# NFR: performance gate (< 2.0 seconds for the in-process Python path)
-# ---------------------------------------------------------------------------
-
-def test_midnight_reset_500_buckets_completes_within_nfr_budget(db_session, fake_clock):
-    """
-    NFR gate: resetting 500 buckets in-process (pure SQLite) must complete in < 2.0 s.
-
-    The k6 benchmark (tests/nfr/quota-batch-reset.js) covers the full 2,000-bucket
-    HTTP path; this unit gate catches regressions early without network overhead.
-    """
-    from src.adapters.outbound.sql_repository import SQLQuotaRepository
-
-    _seed_many_buckets(db_session, fake_clock, count=500)
-
-    repo = SQLQuotaRepository(db_session)
-    domain = QuotaDomainService()
-
-    class _FixedClock:
-        def now(self):
-            return fake_clock.now()
-
-    use_case = MidnightResetJob(repo, _FixedClock(), domain, 100_000)
-
-    start = time.perf_counter()
-    result = use_case.execute()
-    elapsed = time.perf_counter() - start
-
-    assert result.buckets_reset == 500
-    assert elapsed < 2.0, (
-        f"NFR violated: midnight reset for 500 buckets took {elapsed:.3f}s (limit: 2.0s)"
-    )
-
+def test_rollover_preserves_real_consumption_and_ledger(client, db_session, fake_clock, admin):
+    from src.adapters.outbound.db import TokenLedgerDB
+    prior_day = fake_clock.today_str()
+    response = client.post("/api/v1/tokens/events", json={
+        "user_id": "sam_history", "subject_id": "CS101", "prompt_tokens": 120,
+        "completion_tokens": 30})
+    assert response.status_code == 201
+    fake_clock.advance(days=1)
+    response = client.post("/api/v1/quota/cron/midnight-reset", headers=admin)
+    assert response.status_code == 200
+    assert response.json()["buckets_reset"] == 1
+    db_session.expire_all()
+    rows = db_session.execute(select(UserQuotaDB).where(UserQuotaDB.user_id == "sam_history")).scalars().all()
+    assert {r.date: r.tokens_used for r in rows} == {prior_day: 150, fake_clock.today_str(): 0}
+    ledger = db_session.execute(select(TokenLedgerDB).where(TokenLedgerDB.user_id == "sam_history")).scalar_one()
+    assert ledger.total_tokens == 150

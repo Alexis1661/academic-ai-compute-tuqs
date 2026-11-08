@@ -175,8 +175,7 @@ class MidnightResetJob(_QuotaUseCase):
     """
     Story 8.5: bulk midnight reset daemon.
 
-    Resets all tokens_used counters for the current day's period to 0 using chunked
-    bulk UPDATEs, minimising lock contention so concurrent reads remain unblocked.
+    Creates new current-period buckets at zero without changing historical usage.
     """
 
     def execute(self) -> MidnightResetResult:

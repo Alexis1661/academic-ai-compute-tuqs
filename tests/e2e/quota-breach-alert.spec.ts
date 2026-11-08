@@ -70,9 +70,7 @@ test.describe("Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner", (
 
       // ── Then: the progress bar turns solid Red at 100% ──────────────────────────
       expect(await dashboard.getMeterState()).toBe("red");
-      const rgbColor = await dashboard.getMeterColor();
-      // #d32f2f in RGB is rgb(211, 47, 47)
-      expect(rgbColor).toMatch(/rgb\(211,\s*47,\s*47\)/);
+      await expect(dashboard.meterBar).toHaveCSS("background-color", "rgb(211, 47, 47)");
 
       // ── And: an urgent alert banner displays the exact required text ───────────
       await dashboard.expectBreachBannerVisible();
@@ -100,8 +98,7 @@ test.describe("Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner", (
       await dashboard.navigate(studentId, BASE_URL);
 
       expect(await dashboard.getMeterState()).toBe("green");
-      const greenColor = await dashboard.getMeterColor();
-      expect(greenColor).toMatch(/rgb\(46,\s*125,\s*50\)/); // #2e7d32
+      await expect(dashboard.meterBar).toHaveCSS("background-color", "rgb(46, 125, 50)");
       await dashboard.expectWarningBannerHidden();
       await dashboard.expectBreachBannerHidden();
 
@@ -110,8 +107,7 @@ test.describe("Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner", (
       await dashboard.waitForMeterState("amber", 12_000);
 
       expect(await dashboard.getMeterState()).toBe("amber");
-      const amberColor = await dashboard.getMeterColor();
-      expect(amberColor).toMatch(/rgb\(255,\s*143,\s*0\)/); // #ff8f00
+      await expect(dashboard.meterBar).toHaveCSS("background-color", "rgb(255, 143, 0)");
       await dashboard.expectWarningBannerVisible();
       await dashboard.expectBreachBannerHidden();
     }
