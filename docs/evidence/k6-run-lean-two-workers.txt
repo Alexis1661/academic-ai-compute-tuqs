@@ -1,0 +1,164 @@
+
+         /\      Grafana   /‾‾/  
+    /\  /  \     |\  __   /  /   
+   /  \/    \    | |/ /  /   ‾‾\ 
+  /          \   |   (  |  (‾)  |
+ / __________ \  |_|\_\  \_____/ 
+
+
+     execution: local
+        script: tests/nfr/quota-batch-reset.js
+        output: -
+
+     scenarios: (100.00%) 2 scenarios, 51 max VUs, 41s max duration (incl. graceful stop):
+              * readers: 50 looping VUs for 5s (exec: readBalance, gracefulStop: 30s)
+              * reset: 1 iterations shared among 1 VUs (maxDuration: 10s, exec: resetBuckets, startTime: 1s, gracefulStop: 30s)
+
+time="2026-11-08T11:51:12-05:00" level=info msg="Seeded 2000 prior-period buckets at 85000 tokens, period=2026-11-07" source=console
+
+running (01.0s), 50/51 VUs, 61 complete and 0 interrupted iterations
+readers   [   7% ] 50 VUs   0.4s/5s
+reset   • [   0% ] waiting  0.6s
+time="2026-11-08T11:51:13-05:00" level=info msg="Reset: HTTP 200, created=2000, period=2026-11-08, elapsed_ms=329" source=console
+
+running (02.0s), 50/51 VUs, 370 complete and 0 interrupted iterations
+readers   [  27% ] 50 VUs  1.4s/5s   
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (03.0s), 50/51 VUs, 647 complete and 0 interrupted iterations
+readers   [  47% ] 50 VUs  2.4s/5s   
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (04.0s), 50/51 VUs, 859 complete and 0 interrupted iterations
+readers   [  67% ] 50 VUs  3.4s/5s   
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (05.0s), 50/51 VUs, 1150 complete and 0 interrupted iterations
+readers   [  87% ] 50 VUs  4.4s/5s   
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (06.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (07.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (08.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (09.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (10.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (11.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (12.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (13.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (14.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (15.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (16.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (17.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (18.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+
+running (19.0s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+time="2026-11-08T11:51:31-05:00" level=info msg="Verified 2000 API balances; failures=0. Physical rows require a database audit." source=console
+
+
+  █ THRESHOLDS 
+
+    balances_verified
+    ✓ 'count==2000' count=2000
+
+    checks
+    ✓ 'rate==1' rate=100.00%
+
+    concurrent_read_errors
+    ✓ 'rate==0' rate=0.00%
+
+    concurrent_read_latency_ms
+    ✗ 'p(95)<50' p(95)=275.06ms
+
+    reset_duration_ms
+    ✓ 'max<2000' max=329ms
+
+    reset_success
+    ✓ 'rate==1' rate=100.00%
+
+    verification_failures
+    ✓ 'count==0' count=0
+
+
+  █ TOTAL RESULTS 
+
+    checks_total.......: 3341    170.406645/s
+    checks_succeeded...: 100.00% 3341 out of 3341
+    checks_failed......: 0.00%   0 out of 3341
+
+    ✓ concurrent read is HTTP 200 with requested user
+    ✓ reset returns 200
+    ✓ reset creates exactly 2000 period buckets
+    ✓ reset elapsed < 2000 ms
+    ✓ post-reset balance is zero
+
+    CUSTOM
+    balances_verified..............: 2000    102.009365/s
+    concurrent_read_errors.........: 0.00%   0 out of 1338
+    concurrent_read_latency_ms.....: avg=189.4ms  min=110.53ms med=181.35ms max=368.08ms p(90)=254.45ms p(95)=275.06ms p(99)=327.82ms
+    reset_duration_ms..............: avg=329ms    min=329ms    med=329ms    max=329ms    p(90)=329ms    p(95)=329ms    p(99)=329ms   
+    reset_success..................: 100.00% 1 out of 1
+    verification_failures..........: 0       0/s
+
+    HTTP
+    http_req_duration..............: avg=80.05ms  min=0s       med=7.82ms   max=418.38ms p(90)=217.28ms p(95)=247.3ms  p(99)=304.63ms
+      { expected_response:true }...: avg=80.05ms  min=0s       med=7.82ms   max=418.38ms p(90)=217.28ms p(95)=247.3ms  p(99)=304.63ms
+    http_req_failed................: 0.00%   0 out of 3340
+    http_reqs......................: 3340    170.35564/s
+
+    EXECUTION
+    iteration_duration.............: avg=190.55ms min=111.63ms med=181.88ms max=368.65ms p(90)=256.93ms p(95)=276.11ms p(99)=332.05ms
+    iterations.....................: 1339    68.29527/s
+    vus............................: 0       min=0         max=50
+    vus_max........................: 51      min=51        max=51
+
+    NETWORK
+    data_received..................: 1.6 MB  81 kB/s
+    data_sent......................: 361 kB  18 kB/s
+
+
+
+
+running (19.6s), 00/51 VUs, 1339 complete and 0 interrupted iterations
+readers ✓ [ 100% ] 50 VUs  5s        
+reset   ✓ [ 100% ] 1 VUs   00.3s/10s  1/1 shared iters
+time="2026-11-08T11:51:32-05:00" level=error msg="thresholds on metrics 'concurrent_read_latency_ms' have been crossed"

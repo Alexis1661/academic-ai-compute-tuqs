@@ -154,3 +154,47 @@ AD-5 single time source and period keys, AD-6 every non-ALLOW decision explained
 - **Patches applied:** single clock read per use case (AD-5); migration `0002` to BIGINT; fail-closed reads (AD-7); strict integer token counts; id length/whitespace validation in body and path; correlation-id sanitising; error-subclass mapping; clock fallback in error handlers; settings validation; `%` escaping in the Alembic URL; removal of unused `get_ledger_entries` / `get_node`.
 - **Verification:** 81 tests (was 53), `ruff check .` clean, 95% coverage of `src/`. Each patch has a dedicated test (for example `test_read_paths_fail_closed_on_real_database_error`, `test_upgrade_from_0001_preserves_existing_rows`, `test_story_8_1_missing_subject_is_rejected`).
 - **Artifacts Changed:** commits `84c640d`…`ddcb5b7`; review record in the BMad workspace story files and `deferred-work.md`.
+
+
+## Impl-2 evidence review (2026-11-08)
+
+The following are decisions made or findings recorded during this review, not reconstructed historical AI interactions. No contemporaneous evidence of additional human testing overrides was found; the two proposed corrections below are review recommendations, not claims that a human enacted them.
+
+### D-12: Keep concurrency test and qualify its evidence
+The test uses a barrier and checks a 200/429 outcome, but its StaticPool shares one SQLite connection; independent transactions and PostgreSQL row-lock behavior remain unproven.
+
+### D-13: Preserve red-phase provenance
+No pre-implementation console log was located. A new simulated failure cannot prove an earlier red phase; retain this as missing evidence.
+
+### D-14: Separate reset functionality from performance sign-off
+The existing tests check reset behavior and 500 buckets in process. The required 2,000 buckets with 50 concurrent readers remains unverified.
+
+### D-15: Review the k6 threshold and assertions
+The existing script uses p95 < 500 ms, accepts 404, and checks only a positive reset count. It does not establish the requested p95 < 50 ms or all 2,000 zero balances.
+
+### D-16: Configure browser traces on first retry
+Playwright configuration uses Chromium, a retry, a list and HTML reporter, and `trace: on-first-retry`. A trace exists only if a retry occurs; configuration alone is not a captured trace.
+
+### D-17: Proposed human testing correction: avoid fixed sleeps
+Recommend rejecting `waitForTimeout(5000)` in favor of retrying web assertions. This is a proposed correction; no historical human override is evidenced.
+
+### D-18: Proposed human testing correction: avoid mocked locks
+Recommend independent database connections and a barrier against a real database rather than mocking the locking mechanism. This is a proposed correction; no historical human override is evidenced.
+
+### D-19: Keep the quality gate honest
+Assign CONCERNS until historical ATDD evidence, independent-connection concurrency, the complete k6 gate, and reset/seed endpoint authorization are resolved. The direct ingestion path can record usage above the limit; distinguish this behavior from bounded reservations.
+
+### Execution follow-up: reactive CSS assertions
+The first browser run exposed two failures caused by reading an animated color immediately after its state changed. This review changed the assertions to Playwright `toHaveCSS`; the next run passed all 3 tests. Two retry traces from the failed run are retained in `docs/evidence/`. This is an AI-led correction during the present review, not a fabricated human override.
+
+## Impl-2 remediation (2026-11-08)
+
+- Replaced shared-connection race testing with 20 races on distinct SQLite connections; PostgreSQL lock and 1,000-attempt evidence remain open.
+- Replaced destructive current-period reset with idempotent rollover; previous usage and ledger remain intact. The operation needs an external UTC scheduler.
+- Required a shared admin token for reset and opt-in seed, while recording that this is not individual RBAC or an audit trail.
+- Tightened k6 checks and recorded both a one-worker and four-worker run; both failed the read p95 target despite correct 2,000-row rollover and zero read errors.
+- A self-starting Playwright run exposed inconsistent initial number formatting; rendering was corrected and all 3 tests passed. These are AI-led actions, not claims of human testing overrides.
+
+## Performance follow-up (2026-11-08)
+
+AI-led optimization reduced unnecessary FastAPI dependency thread dispatch, kept SQL queries and session close in worker threads, and restricted the balance query to the needed columns. The unchanged gate failed in every run. Variability in repeated measurements on the shared host prevents a reliable improvement claim. SQLite WAL, eight workers, and an asynchronous clock were tested experimentally; the first two are not configured in the application and the clock change was reverted. Detailed logs, audits, and conditions are in `docs/evidence/performance-investigation.md`. No human override is asserted.

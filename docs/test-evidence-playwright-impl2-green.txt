@@ -1,0 +1,8 @@
+
+Running 3 tests using 1 worker
+
+  ok 1 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (11.3s)
+  ok 2 [chromium] › quota-breach-alert.spec.ts:90:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) (6.2s)
+  ok 3 [chromium] › quota-breach-alert.spec.ts:116:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Fresh student shows 0 tokens used and green meter (294ms)
+
+  3 passed (20.5s)

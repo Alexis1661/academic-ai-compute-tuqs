@@ -1,19 +1,19 @@
 # docs/sprint-status.yaml
-# BMad Method Sprint Tracking File - Task Impl-1
+# BMad Method Sprint Tracking File - Task Impl-2
 # Module 8: Token Usage & Quota Service (TUQS)
 # Authors: Alexis Delgado (Lead Architect) & Valentina Gómez (Test Lead)
-# Implementation Sprint: Foundation Scaffold + 3 Core Stories (Annex, Module 8)
+# Implementation Sprint: six stories; Impl-2 quality gate remains under review
 # Status lifecycle: ready-for-dev -> in-progress -> ready-for-review -> done
 
-sprint_id: "IMPL-1-FOUNDATION-BUILD"
+sprint_id: "IMPL-2-SYSTEM-HARDENING"
 target_system: "Academic AI Compute Fabric"
 module: "Module 8: Token Usage & Quota Service (TUQS)"
-status: "COMPLETED"
+status: "IN_REVIEW"
 generated_date: "2026-10-25"
 sign_off:
   architect_lead: "Alexis Delgado"
   test_lead: "Valentina Gómez"
-  verdict: "ALL_STORIES_DONE_AND_VERIFIED"
+  verdict: "FAIL - read p95 exceeds target; evidence incomplete"
 
 # Impl-1 implements the Annex stories; mapping to the Solu-2 backlog (Planning/epics.md)
 solu2_backlog_mapping:
@@ -138,7 +138,7 @@ stories:
   - id: "STORY-8.4"
     name: "Atomic Concurrency Bucket Drain Race Condition Defense"
     mandated_flow: "Flow A: ATDD-First (bmad-testarch-atdd)"
-    status: "done"
+    status: "ready-for-review"
     history:
       - { date: "2026-11-07", status: "ready-for-dev" }
       - { date: "2026-11-07", status: "in-progress", note: "Red Phase scaffolded with threading.Barrier" }
@@ -158,21 +158,21 @@ stories:
   - id: "STORY-8.5"
     name: "Midnight Automatic Quota Reset Daemon with High-Throughput Batch Processing"
     mandated_flow: "Flow D: Quality Gate (Performance & NFR)"
-    status: "done"
+    status: "ready-for-review"
     history:
       - { date: "2026-11-07", status: "ready-for-dev" }
       - { date: "2026-11-07", status: "in-progress" }
-      - { date: "2026-11-07", status: "done", note: "Chunked bulk UPDATE and k6 benchmark scaffolded" }
+      - { date: "2026-11-07", status: "done", note: "Original reset and k6 benchmark scaffolded; superseded by period rollover" }
     endpoints:
       - "POST /api/v1/quota/cron/midnight-reset"
       - "POST /api/v1/quota/cron/seed-test-buckets"
     tables_affected:
-      - "user_quotas (chunked bulk UPDATE)"
+      - "user_quotas (idempotent current-period insertion)"
     definition_of_done:
       code_implemented: true
       invariants_upheld:
-        - "Batch reset completes in < 2.0s for 2,000 buckets"
-        - "Concurrent token query reads experience zero lock timeouts"
+        - "2,000 period rows created in < 2.0s in recorded k6 runs; p95 gate failed"
+        - "Recorded k6 reads had zero errors; read p95 exceeded 50 ms"
       test_files:
         - "tests/unit/test_story_8_5_midnight_reset.py"
         - "tests/nfr/quota-batch-reset.js"
@@ -207,7 +207,7 @@ deferred_to_impl2:
   - "Group and course buckets; 80% notification outbox with de-duplication"
 
 quality_summary:
-  # Measured: pytest -v and pytest --cov=src --cov-branch on 2026-10-26 (docs/test-evidence-impl1.txt)
+  # Historical Impl-1 measurements on 2026-10-26 (docs/test-evidence-impl1.txt); current results below
   total_tests: 81
   passed_tests: 81
   failed_tests: 0
@@ -215,3 +215,11 @@ quality_summary:
   pass_rate: "100%"
   line_and_branch_coverage_src: "95%"
   lint: "ruff check . -> All checks passed"
+
+# Story states above reflect the existing implementation tracker; done is not a release sign-off.
+impl2_evidence_review:
+  pytest: "93 passed after performance changes; domain combined coverage 98%, 11/12 branches"
+  red_phase: "Historical terminal evidence unavailable"
+  nfr: "FAIL: latest four-worker p95 repeats 990.12 and 463.11 ms; target < 50 ms"
+  e2e: "3 passed; historical retry traces retained"
+  release_gate: "FAIL"

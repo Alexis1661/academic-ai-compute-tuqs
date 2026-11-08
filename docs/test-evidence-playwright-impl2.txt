@@ -1,0 +1,82 @@
+
+Running 3 tests using 1 worker
+
+  x  1 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (10.9s)
+  x  2 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (retry #1) (11.5s)
+  x  3 [chromium] › quota-breach-alert.spec.ts:92:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) (5.5s)
+  x  4 [chromium] › quota-breach-alert.spec.ts:92:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) (retry #1) (6.0s)
+  ok 5 [chromium] › quota-breach-alert.spec.ts:120:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Fresh student shows 0 tokens used and green meter (469ms)
+
+
+  1) [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption 
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /rgb\(211,\s*47,\s*47\)/
+    Received string:  "rgb(255, 143, 0)"
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:75:24)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium\error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /rgb\(211,\s*47,\s*47\)/
+    Received string:  "rgb(252, 136, 3)"
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:75:24)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › quota-breach-alert.spec.ts:92:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) 
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /rgb\(255,\s*143,\s*0\)/
+    Received string:  "rgb(46, 125, 50)"
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:114:26)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-e3ad1-itions-Green-80-→-Amber-80--chromium\error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toMatch(expected)
+
+    Expected pattern: /rgb\(255,\s*143,\s*0\)/
+    Received string:  "rgb(61, 126, 46)"
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:114:26)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-e3ad1-itions-Green-80-→-Amber-80--chromium-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\quota-breach-alert-Story-8-e3ad1-itions-Green-80-→-Amber-80--chromium-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\quota-breach-alert-Story-8-e3ad1-itions-Green-80-→-Amber-80--chromium-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2 failed
+    [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption 
+    [chromium] › quota-breach-alert.spec.ts:92:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) 
+  1 passed (45.9s)

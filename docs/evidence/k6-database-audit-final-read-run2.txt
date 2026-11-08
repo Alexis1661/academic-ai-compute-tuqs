@@ -1,0 +1,3 @@
+period=2026-11-07 rows=2000 zero=0 used_85000=2000
+period=2026-11-08 rows=2000 zero=2000 used_85000=0
+PASS physical verification

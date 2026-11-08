@@ -1,0 +1,22 @@
+[WebServer] INFO:     Started server process [5028]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] 2026-11-08 10:57:44,576 INFO [alembic.runtime.migration] Context impl SQLiteImpl.
+[WebServer] 2026-11-08 10:57:44,576 INFO [alembic.runtime.migration] Will assume non-transactional DDL.
+[WebServer] 2026-11-08 10:57:44,589 INFO [src.main] database migrated to head
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+Running 3 tests using 1 worker
+
+[WebServer] 2026-11-08 10:57:47,965 INFO [src.application.use_cases] token_event_recorded user=sam_1794153467871 subject=E2E-TEST total=95000 used=95000 limit=100000
+[WebServer] 2026-11-08 10:57:47,965 WARNING [src.application.use_cases] quota_warning_crossed user=sam_1794153467871 threshold=80% remaining=5000
+[WebServer] 2026-11-08 10:57:48,465 INFO [src.application.use_cases] token_event_recorded user=sam_1794153467871 subject=E2E-TEST total=6000 used=101000 limit=100000
+[WebServer] 2026-11-08 10:57:48,465 WARNING [src.application.use_cases] quota_overrun user=sam_1794153467871 used=101000 limit=100000
+  ok 1 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (6.6s)
+[WebServer] 2026-11-08 10:57:54,400 INFO [src.application.use_cases] token_event_recorded user=sam_1794153474363 subject=E2E-TEST total=50000 used=50000 limit=100000
+[WebServer] 2026-11-08 10:57:54,677 INFO [src.application.use_cases] token_event_recorded user=sam_1794153474363 subject=E2E-TEST total=32000 used=82000 limit=100000
+[WebServer] 2026-11-08 10:57:54,677 WARNING [src.application.use_cases] quota_warning_crossed user=sam_1794153474363 threshold=80% remaining=18000
+  ok 2 [chromium] › quota-breach-alert.spec.ts:90:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) (6.1s)
+  ok 3 [chromium] › quota-breach-alert.spec.ts:116:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Fresh student shows 0 tokens used and green meter (401ms)
+
+  3 passed (22.9s)

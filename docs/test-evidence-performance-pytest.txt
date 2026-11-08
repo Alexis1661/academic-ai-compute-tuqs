@@ -1,0 +1,33 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.6, pytest-9.0.3, pluggy-1.6.0
+rootdir: C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs
+configfile: pyproject.toml
+testpaths: tests
+plugins: anyio-4.13.0, langsmith-0.7.25, cov-7.1.0
+collected 93 items
+
+tests\contract\test_openapi_contract.py .....                            [  5%]
+tests\integration\test_atomic_consumption.py ..                          [  7%]
+tests\integration\test_migrations.py .....                               [ 12%]
+tests\integration\test_story_8_4_atomic_reservation.py .....             [ 18%]
+tests\unit\test_domain_quota_service.py ..................               [ 37%]
+tests\unit\test_error_handling.py ...........                            [ 49%]
+tests\unit\test_fleet_and_health.py ...                                  [ 52%]
+tests\unit\test_settings.py ......                                       [ 59%]
+tests\unit\test_story_8_1_ledger_ingestion.py .............              [ 73%]
+tests\unit\test_story_8_2_soft_warning.py .........                      [ 82%]
+tests\unit\test_story_8_3_hard_denial.py .........                       [ 92%]
+tests\unit\test_story_8_5_midnight_reset.py .......                      [100%]
+
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.6-final-0 _______________
+
+Name                       Stmts   Miss Branch BrPart  Cover   Missing
+----------------------------------------------------------------------
+src\domain\__init__.py         4      0      0      0   100%
+src\domain\exceptions.py      16      0      0      0   100%
+src\domain\models.py          60      1      4      1    97%   67
+src\domain\services.py        39      0      8      0   100%
+----------------------------------------------------------------------
+TOTAL                        119      1     12      1    98%
+============================= 93 passed in 13.82s =============================

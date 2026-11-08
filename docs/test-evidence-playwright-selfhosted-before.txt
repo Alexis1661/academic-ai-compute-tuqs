@@ -1,0 +1,80 @@
+[WebServer] INFO:     Started server process [18128]
+[WebServer] INFO:     Waiting for application startup.
+[WebServer] 2026-11-08 10:55:45,997 INFO [alembic.runtime.migration] Context impl SQLiteImpl.
+[WebServer] 2026-11-08 10:55:45,999 INFO [alembic.runtime.migration] Will assume non-transactional DDL.
+[WebServer] 2026-11-08 10:55:46,036 INFO [alembic.runtime.migration] Running upgrade  -> 0001, Initial TUQS schema: user_quotas and token_ledger (Stories 8.1-8.3).
+[WebServer] 2026-11-08 10:55:46,115 INFO [alembic.runtime.migration] Running upgrade 0001 -> 0002, Widen token counters to BIGINT (PRD FR-5, AD-3).
+[WebServer] 2026-11-08 10:55:46,237 INFO [src.main] database migrated to head
+[WebServer] INFO:     Application startup complete.
+[WebServer] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+
+Running 3 tests using 1 worker
+
+[WebServer] 2026-11-08 10:55:51,619 INFO [src.application.use_cases] token_event_recorded user=sam_1794153351520 subject=E2E-TEST total=95000 used=95000 limit=100000
+[WebServer] 2026-11-08 10:55:51,619 WARNING [src.application.use_cases] quota_warning_crossed user=sam_1794153351520 threshold=80% remaining=5000
+  x  1 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (6.9s)
+[WebServer] 2026-11-08 10:56:00,907 INFO [src.application.use_cases] token_event_recorded user=sam_1794153360813 subject=E2E-TEST total=95000 used=95000 limit=100000
+[WebServer] 2026-11-08 10:56:00,907 WARNING [src.application.use_cases] quota_warning_crossed user=sam_1794153360813 threshold=80% remaining=5000
+  x  2 [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption (retry #1) (7.0s)
+[WebServer] 2026-11-08 10:56:14,492 INFO [src.application.use_cases] token_event_recorded user=sam_1794153374330 subject=E2E-TEST total=50000 used=50000 limit=100000
+[WebServer] 2026-11-08 10:56:15,174 INFO [src.application.use_cases] token_event_recorded user=sam_1794153374330 subject=E2E-TEST total=32000 used=82000 limit=100000
+[WebServer] 2026-11-08 10:56:15,174 WARNING [src.application.use_cases] quota_warning_crossed user=sam_1794153374330 threshold=80% remaining=18000
+  ok 3 [chromium] › quota-breach-alert.spec.ts:90:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Meter colour transitions: Green (< 80%) → Amber (>= 80%) (7.2s)
+  ok 4 [chromium] › quota-breach-alert.spec.ts:116:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Fresh student shows 0 tokens used and green meter (458ms)
+
+
+  1) [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption 
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('#tokens-used-value')
+    Expected: "95,000"
+    Received: "95000"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" locator('#tokens-used-value') with timeout 5000ms
+      - waiting for locator('#tokens-used-value')
+        13 × locator resolved to <span class="counter-value" id="tokens-used-value">95000</span>
+           - unexpected value "95000"
+
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:54:47)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium\error-context.md
+
+    Retry #1 ───────────────────────────────────────────────────────────────────────────────────────
+
+    Error: expect(locator).toHaveText(expected) failed
+
+    Locator:  locator('#tokens-used-value')
+    Expected: "95,000"
+    Received: "95000"
+    Timeout:  5000ms
+
+    Call log:
+      - Expect "toHaveText" locator('#tokens-used-value') with timeout 5000ms
+      - waiting for locator('#tokens-used-value')
+        13 × locator resolved to <span class="counter-value" id="tokens-used-value">95000</span>
+           - unexpected value "95000"
+
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\quota-breach-alert.spec.ts:54:47)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1646:9)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1135:11)
+        at C:\Users\alexd\Downloads\ssf spec\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD (6)\ALEXIS_DELGADO_VALENTINA_GOMEZ_IMPL1_BMAD\academic-ai-compute-tuqs\tests\e2e\node_modules\playwright\lib\worker\workerProcessEntry.js:1644:7)
+
+    Error Context: test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\trace.zip
+    Usage:
+
+        npx playwright show-trace test-results\quota-breach-alert-Story-8-811b3-h-banner-at-100-consumption-chromium-retry1\trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › quota-breach-alert.spec.ts:42:3 › Story 8.6: Real-Time Usage Ledger & Quota Breach Alert Banner › Scenario: Quota meter turns red and displays breach banner at 100% consumption 
+  2 passed (48.5s)
