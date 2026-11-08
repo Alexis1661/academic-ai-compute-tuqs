@@ -10,6 +10,7 @@ authors = [
 ]
 dependencies = [
     "fastapi>=0.110.0",
+    "anyio>=4.0.0",
     "uvicorn[standard]>=0.28.0",
     "pydantic>=2.6.0",
     "pydantic-settings>=2.2.0",

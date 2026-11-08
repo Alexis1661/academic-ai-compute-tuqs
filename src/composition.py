@@ -1,6 +1,9 @@
 """
 Composition root: the only module that wires concrete adapters to ports.
-FastAPI dependencies are declared here so tests can override any of them
+FastAPI providers construct objects or return singletons; async providers avoid scheduling
+trivial operations on a threadpool. The synchronous clock provider is also called directly
+by error handling. Database lifecycle and repository calls remain off the event loop.
+Tests can override any provider
 (e.g. get_clock -> FakeClock) via app.dependency_overrides.
 """
 from fastapi import Depends
@@ -32,19 +35,19 @@ def get_clock() -> IClock:
     return _system_clock
 
 
-def get_domain_service() -> QuotaDomainService:
+async def get_domain_service() -> QuotaDomainService:
     return _domain_service
 
 
-def get_fleet_provider() -> IFleetProvider:
+async def get_fleet_provider() -> IFleetProvider:
     return _fleet_provider
 
 
-def get_repository(db: Session = Depends(get_db)) -> IQuotaRepository:
+async def get_repository(db: Session = Depends(get_db)) -> IQuotaRepository:
     return SQLQuotaRepository(db)
 
 
-def get_ingest_token_event(
+async def get_ingest_token_event(
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
     domain: QuotaDomainService = Depends(get_domain_service),
@@ -52,7 +55,7 @@ def get_ingest_token_event(
     return IngestTokenEvent(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
 
 
-def get_quota_balance(
+async def get_quota_balance(
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
     domain: QuotaDomainService = Depends(get_domain_service),
@@ -60,7 +63,7 @@ def get_quota_balance(
     return GetQuotaBalance(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
 
 
-def get_check_allowance(
+async def get_check_allowance(
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
     domain: QuotaDomainService = Depends(get_domain_service),
@@ -68,7 +71,7 @@ def get_check_allowance(
     return CheckAllowance(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
 
 
-def get_reserve_tokens(
+async def get_reserve_tokens(
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
     domain: QuotaDomainService = Depends(get_domain_service),
@@ -77,7 +80,7 @@ def get_reserve_tokens(
     return ReserveTokens(repository, clock, domain, settings.DEFAULT_DAILY_TOKEN_LIMIT)
 
 
-def get_midnight_reset(
+async def get_midnight_reset(
     repository: IQuotaRepository = Depends(get_repository),
     clock: IClock = Depends(get_clock),
     domain: QuotaDomainService = Depends(get_domain_service),

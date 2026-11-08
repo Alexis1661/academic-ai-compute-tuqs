@@ -1,3 +1,5 @@
+from anyio import to_thread
+
 from sqlalchemy import (
     BigInteger,
     CheckConstraint,
@@ -69,10 +71,14 @@ engine = build_engine(settings.DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
-def get_db():
-    """Dependency provider for a request-scoped database session."""
+async def get_db():
+    """Construct a request-scoped session without blocking the event loop.
+
+    Session construction is lazy; all database operations run in synchronous route
+    handlers. Closing can roll back a transaction, so it must run in a worker.
+    """
     db = SessionLocal()
     try:
         yield db
     finally:
-        db.close()
+        await to_thread.run_sync(db.close)

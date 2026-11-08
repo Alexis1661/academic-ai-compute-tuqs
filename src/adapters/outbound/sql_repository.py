@@ -30,16 +30,18 @@ class SQLQuotaRepository(IQuotaRepository):
     def get_quota_or_default(self, user_id: str, date: str, default_limit: int) -> UserQuota:
         try:
             record = self.session.execute(
-                select(UserQuotaDB).where(UserQuotaDB.user_id == user_id, UserQuotaDB.date == date)
-            ).scalar_one_or_none()
+                select(UserQuotaDB.token_limit, UserQuotaDB.tokens_used).where(
+                    UserQuotaDB.user_id == user_id, UserQuotaDB.date == date
+                )
+            ).one_or_none()
         except OperationalError as exc:
             # AD-7: never answer a quota read from anything but the store
             raise StorageUnavailableError() from exc
         if record is None:
             return UserQuota(user_id=user_id, date=date, token_limit=default_limit, tokens_used=0)
         return UserQuota(
-            user_id=record.user_id,
-            date=record.date,
+            user_id=user_id,
+            date=date,
             token_limit=record.token_limit,
             tokens_used=record.tokens_used,
         )
